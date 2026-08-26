@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { decideSubmission, identifyUpload, isLate, storedNameFor } from "./submissions";
+import {
+  CANONICAL_MIME,
+  decideSubmission,
+  identifyUpload,
+  isLate,
+  safeHeaderFilename,
+  storedNameFor,
+} from "./submissions";
 
 const DUE = new Date("2026-06-01T17:00:00Z");
 const before = new Date("2026-05-30T09:00:00Z");
@@ -101,5 +108,43 @@ describe("decideSubmission", () => {
 describe("storedNameFor", () => {
   it("names files from our own ids, never the upload's name", () => {
     expect(storedNameFor("abc123", 2, "docx")).toBe("abc123-v2.docx");
+  });
+});
+
+describe("safeHeaderFilename", () => {
+  it("leaves an ordinary filename alone", () => {
+    expect(safeHeaderFilename("okafor-essay.pdf")).toBe("okafor-essay.pdf");
+  });
+
+  it("neutralises quotes and backslashes that would escape the header value", () => {
+    // Without this, a filename can close the quoted string and append
+    // parameters of the uploader's choosing to Content-Disposition.
+    expect(safeHeaderFilename('a".pdf')).toBe("a_.pdf");
+    expect(safeHeaderFilename("a\\b.pdf")).toBe("a_b.pdf");
+  });
+
+  it("strips control characters that would split the header", () => {
+    expect(safeHeaderFilename("a\r\nSet-Cookie: x=1.pdf")).toBe(
+      "a__Set-Cookie: x=1.pdf",
+    );
+  });
+
+  it("falls back to a name rather than an empty header value", () => {
+    expect(safeHeaderFilename("\r\n")).toBe("submission");
+  });
+
+  it("caps the length", () => {
+    expect(safeHeaderFilename("a".repeat(400)).length).toBe(120);
+  });
+});
+
+describe("CANONICAL_MIME", () => {
+  it("is the only source of a served Content-Type", () => {
+    // The upload's own Content-Type is a claim by the client. Echoing it back
+    // would allow a student's file to be served as text/html from our origin.
+    expect(CANONICAL_MIME.pdf).toBe("application/pdf");
+    expect(CANONICAL_MIME.docx).toBe(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
   });
 });

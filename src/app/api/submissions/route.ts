@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getActingStudent } from "@/lib/session";
 import {
+  CANONICAL_MIME,
   decideSubmission,
   identifyUpload,
   storedNameFor,
@@ -115,7 +116,8 @@ export async function POST(request: Request) {
         studentId: student.id,
         originalName: file.name,
         storedName: "pending",
-        mimeType: file.type || (kind === "pdf" ? "application/pdf" : ""),
+        // Our own type for the kind we identified, not the client's claim.
+        mimeType: CANONICAL_MIME[kind],
         sizeBytes: bytes.byteLength,
         submittedAt: now,
         isLate: decision.late,
@@ -123,7 +125,7 @@ export async function POST(request: Request) {
       },
       update: {
         originalName: file.name,
-        mimeType: file.type || (kind === "pdf" ? "application/pdf" : ""),
+        mimeType: CANONICAL_MIME[kind],
         sizeBytes: bytes.byteLength,
         submittedAt: now,
         isLate: decision.late,

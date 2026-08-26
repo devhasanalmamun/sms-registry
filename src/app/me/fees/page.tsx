@@ -1,4 +1,4 @@
-import { requireStudent } from "@/lib/session";
+import { studentOnly } from "@/lib/guards";
 import { getStudentDetail } from "@/server/queries";
 import {
   Code,
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
  * No "arrears" jargon and no seal-red unless something is genuinely late.
  */
 export default async function MyFeesPage() {
-  const student = await requireStudent();
+  const student = await studentOnly();
   const detail = await getStudentDetail(student.id);
   if (!detail) return null;
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getActingStudent, getSession } from "@/lib/session";
 import { switchRole } from "@/server/session-actions";
 import { NavLink } from "@/components/nav-link";
 
@@ -34,10 +34,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
     select: { id: true, fullName: true, studentId: true, status: true },
   });
 
-  const acting =
-    session.role === "student"
-      ? students.find((s) => s.id === session.studentId)
-      : undefined;
+  const acting = await getActingStudent();
 
   const nav = session.role === "staff" ? staffNav : studentNav;
 

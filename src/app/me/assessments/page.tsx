@@ -1,4 +1,4 @@
-import { requireStudent } from "@/lib/session";
+import { studentOnly } from "@/lib/guards";
 import { getStudentAssessments } from "@/server/queries";
 import { SubmissionUpload } from "@/components/submission-upload";
 import {
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  * ordering a student in the week before a deadline cares about.
  */
 export default async function MyAssessmentsPage() {
-  const student = await requireStudent();
+  const student = await studentOnly();
   const rows = await getStudentAssessments(student.id);
 
   const withdrawn = student.status === "WITHDRAWN";

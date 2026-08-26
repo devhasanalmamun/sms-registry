@@ -1,4 +1,4 @@
-import { requireStudent } from "@/lib/session";
+import { studentOnly } from "@/lib/guards";
 import { getStudentAssessments, getStudentMarksheet } from "@/server/queries";
 import { averageScore } from "@/lib/grading";
 import {
@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
  * my paper", and that is a phone call to Registry.
  */
 export default async function MarksheetPage() {
-  const student = await requireStudent();
+  const student = await studentOnly();
 
   const [results, assessments] = await Promise.all([
     getStudentMarksheet(student.id),

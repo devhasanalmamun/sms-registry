@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 
@@ -11,8 +12,13 @@ import { prisma } from "@/lib/db";
  * from here. Switching to "student" in the UI does not merely hide staff data —
  * the data is never fetched, so it never reaches the browser at all.
  *
- * Swapping this for real auth means replacing `getSession()` with a call into
- * the auth provider; nothing downstream changes.
+ * The acting student is resolved against the database rather than taken from
+ * the cookie, so a cookie naming a student who no longer exists degrades to the
+ * staff view instead of erroring. `cache` dedupes that lookup across everything
+ * rendered for a single request.
+ *
+ * Swapping this for real authentication means replacing `getActingStudent()`
+ * with a call into the auth provider; nothing downstream changes.
  */
 
 export const ROLE_COOKIE = "sms_role";
@@ -21,35 +27,36 @@ export type Session =
   | { role: "staff"; studentId: null }
   | { role: "student"; studentId: string };
 
-/** Parses the cookie. Anything unrecognised falls back to staff. */
-export async function getSession(): Promise<Session> {
+/**
+ * The student currently being impersonated, or null when acting as staff — or
+ * when the cookie points at a record that has since been deleted.
+ */
+export const getActingStudent = cache(async () => {
   const store = await cookies();
   const raw = store.get(ROLE_COOKIE)?.value ?? "staff";
 
-  if (raw.startsWith("student:")) {
-    const studentId = raw.slice("student:".length).trim();
-    if (studentId) return { role: "student", studentId };
-  }
-  return { role: "staff", studentId: null };
-}
+  if (!raw.startsWith("student:")) return null;
 
-/**
- * Resolves the acting student, or null when acting as staff / when the cookie
- * points at a student who has since been deleted.
- */
-export async function getActingStudent() {
-  const session = await getSession();
-  if (session.role !== "student") return null;
+  const id = raw.slice("student:".length).trim();
+  if (!id) return null;
 
   return prisma.student.findUnique({
-    where: { id: session.studentId },
+    where: { id },
     include: { programme: true },
   });
+});
+
+export async function getSession(): Promise<Session> {
+  const student = await getActingStudent();
+  return student
+    ? { role: "student", studentId: student.id }
+    : { role: "staff", studentId: null };
 }
 
 /**
- * Guard for student-only routes. Throws rather than returning null so that a
- * page cannot accidentally continue rendering with an undefined student.
+ * Guard for code paths that must have a student. Throws rather than returning
+ * null so a caller cannot accidentally continue with an undefined student.
+ * Pages should use `studentOnly()` from lib/guards, which redirects instead.
  */
 export async function requireStudent() {
   const student = await getActingStudent();

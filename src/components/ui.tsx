@@ -52,7 +52,7 @@ export function Panel({
   return (
     <section
       {...rest}
-      className={cn("border border-rule bg-card", className)}
+      className={cn("min-w-0 border border-rule bg-card", className)}
     >
       {children}
     </section>

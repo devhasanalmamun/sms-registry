@@ -36,6 +36,19 @@ export const ACCEPTED_UPLOADS = {
 
 export type UploadKind = keyof typeof ACCEPTED_UPLOADS;
 
+/**
+ * The Content-Type we will serve a submission back with.
+ *
+ * Derived from the kind we identified from the file's own bytes — never from
+ * the upload's `Content-Type`, which is a claim made by the client. Echoing
+ * that claim back on download would let a student have their file served as
+ * text/html from our origin, which is stored XSS.
+ */
+export const CANONICAL_MIME: Record<UploadKind, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+};
+
 export function extensionOf(filename: string): string {
   const dot = filename.lastIndexOf(".");
   return dot === -1 ? "" : filename.slice(dot).toLowerCase();
@@ -102,6 +115,26 @@ export function decideSubmission(params: {
   }
 
   return { allowed: true, late };
+}
+
+/**
+ * Makes a client-supplied filename safe to echo in a Content-Disposition
+ * header. Quotes and backslashes would let the value escape the quoted string
+ * and inject further header parameters; control characters would split the
+ * header outright.
+ */
+export function safeHeaderFilename(originalName: string): string {
+  const cleaned = originalName
+    // Control characters would split the header; a quote or a backslash
+    // would escape the quoted value and let further parameters be added.
+    .replace(/[\u0000-\u001f\u007f"\\]/g, "_")
+    // Anything outside printable ASCII travels in the RFC 5987 form instead.
+    .replace(/[^\u0020-\u007e]/g, "_")
+    .slice(0, 120);
+
+  // A name that sanitised away to nothing meaningful gets a real one, so
+  // the header is never empty or a row of underscores.
+  return /[a-z0-9]/i.test(cleaned) ? cleaned : "submission";
 }
 
 /** Filename written to disk. Never trusts the client-supplied name. */
