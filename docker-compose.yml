@@ -1,0 +1,23 @@
+# Local PostgreSQL for development. Any Postgres works — point DATABASE_URL
+# at Neon/Supabase/RDS instead and nothing else changes.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sms-registry-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sms
+      POSTGRES_PASSWORD: sms_dev_password
+      POSTGRES_DB: sms_registry
+    ports:
+      - "5433:5432"
+    volumes:
+      - sms_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sms -d sms_registry"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  sms_pgdata:

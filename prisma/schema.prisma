@@ -1,0 +1,167 @@
+// Registry module — Student Management System
+//
+// Modelling notes:
+//  * Money is Decimal(10,2). Never Float — 0.1 + 0.2 problems in a fees ledger
+//    are not acceptable to a Registry team reconciling against a bank statement.
+//  * A student's balance is DERIVED (charges - payments), never stored. A stored
+//    balance is a cache, and caches drift; the ledger is the truth.
+//  * Submission.isLate and Result.published are stamped at write time so that
+//    later edits to a deadline don't silently rewrite history.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  // In Prisma 7 the connection URL lives in prisma.config.ts (for the CLI)
+  // and is passed to PrismaClient via a driver adapter (see src/lib/db.ts).
+  provider = "postgresql"
+}
+
+/// Where a student sits in their journey with the institution.
+enum EnrolmentStatus {
+  ENROLLED
+  DEFERRED
+  WITHDRAWN
+  COMPLETED
+}
+
+/// A course of study. Fee amount lives here so enrolling a student can derive
+/// their tuition charge without Registry re-keying a number every time.
+model Programme {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  name          String
+  durationYears Int       @default(3)
+  feeAmount     Decimal   @db.Decimal(10, 2)
+  createdAt     DateTime  @default(now())
+  students      Student[]
+
+  @@map("programmes")
+}
+
+model Student {
+  id           String          @id @default(cuid())
+  /// Human-facing identifier, e.g. SMS-2025-0001. Allocated atomically.
+  studentId    String          @unique
+  fullName     String
+  /// Stored lowercased so that A.Smith@x.ac.uk and a.smith@x.ac.uk collide.
+  email        String          @unique
+  dateOfBirth  DateTime        @db.Date
+  programmeId  String
+  programme    Programme       @relation(fields: [programmeId], references: [id])
+  academicYear Int
+  status       EnrolmentStatus @default(ENROLLED)
+  enrolledAt   DateTime        @default(now())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  charges     FeeCharge[]
+  payments    Payment[]
+  submissions Submission[]
+  results     Result[]
+
+  @@index([status])
+  @@index([programmeId])
+  @@map("students")
+}
+
+/// A debit on the student's account: tuition, a resit fee, a late penalty.
+model FeeCharge {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  dueDate     DateTime @db.Date
+  createdAt   DateTime @default(now())
+
+  @@index([studentId])
+  @@index([dueDate])
+  @@map("fee_charges")
+}
+
+/// A credit on the student's account.
+model Payment {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(10, 2)
+  paidAt    DateTime @default(now())
+  /// Bank/transaction reference. Unique so a receipt can't be entered twice.
+  reference String   @unique
+  method    String   @default("Bank transfer")
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+  @@map("payments")
+}
+
+model Assessment {
+  id        String   @id @default(cuid())
+  title     String
+  module    String
+  dueAt     DateTime
+  createdAt DateTime @default(now())
+
+  submissions Submission[]
+  results     Result[]
+
+  @@index([dueAt])
+  @@map("assessments")
+}
+
+model Submission {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  originalName String
+  /// Filename on disk under UPLOAD_DIR. Never the client-supplied name.
+  storedName   String
+  mimeType     String
+  sizeBytes    Int
+  submittedAt  DateTime   @default(now())
+  /// Stamped at write time against the deadline as it stood then.
+  isLate       Boolean    @default(false)
+  /// 1 on first upload, incremented on each permitted resubmission.
+  attempt      Int        @default(1)
+
+  /// One submission per student per assessment; resubmission updates in place.
+  @@unique([assessmentId, studentId])
+  @@index([studentId])
+  @@map("submissions")
+}
+
+model Result {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  /// 0-100. Constrained in the application layer and by a CHECK constraint.
+  score        Int
+  feedback     String?
+  /// Results are withheld by default: staff publish deliberately, per student.
+  published    Boolean    @default(false)
+  publishedAt  DateTime?
+  markedAt     DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([assessmentId, studentId])
+  @@index([studentId])
+  @@map("results")
+}
+
+/// One row per academic year, used to hand out sequential student IDs inside a
+/// transaction so two concurrent enrolments can never claim the same number.
+model StudentIdSequence {
+  year      Int @id
+  lastValue Int @default(0)
+
+  @@map("student_id_sequences")
+}
