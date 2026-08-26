@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
@@ -106,8 +107,31 @@ export async function POST(request: Request) {
 
   const attempt = existing ? existing.attempt + 1 : 1;
 
+  // Write the file BEFORE the database row.
+  //
+  // Doing it the other way round meant a failed disk write left a record
+  // claiming a submission that did not exist: on a resubmission the row got
+  // the new filename, size and timestamp while `storedName` still pointed at
+  // the previous attempt's file, so the student was shown one thing and the
+  // marker downloaded another. The stored name therefore comes from a fresh
+  // random id rather than the row id, which is what forced the old ordering.
+  const storedName = storedNameFor(randomUUID(), attempt, kind);
+
   try {
-    const submission = await prisma.submission.upsert({
+    await saveSubmissionFile(storedName, bytes);
+  } catch (error) {
+    console.error("Could not write submission to storage", error);
+    return NextResponse.json(
+      {
+        error:
+          "The file could not be saved. Nothing was recorded — your previous submission, if any, is untouched. Try again.",
+      },
+      { status: 500 },
+    );
+  }
+
+  try {
+    await prisma.submission.upsert({
       where: {
         assessmentId_studentId: { assessmentId, studentId: student.id },
       },
@@ -115,7 +139,7 @@ export async function POST(request: Request) {
         assessmentId,
         studentId: student.id,
         originalName: file.name,
-        storedName: "pending",
+        storedName,
         // Our own type for the kind we identified, not the client's claim.
         mimeType: CANONICAL_MIME[kind],
         sizeBytes: bytes.byteLength,
@@ -125,6 +149,7 @@ export async function POST(request: Request) {
       },
       update: {
         originalName: file.name,
+        storedName,
         mimeType: CANONICAL_MIME[kind],
         sizeBytes: bytes.byteLength,
         submittedAt: now,
@@ -132,36 +157,31 @@ export async function POST(request: Request) {
         attempt,
       },
     });
-
-    const storedName = storedNameFor(submission.id, attempt, kind);
-    await saveSubmissionFile(storedName, bytes);
-
-    await prisma.submission.update({
-      where: { id: submission.id },
-      data: { storedName },
-    });
-
-    // A resubmission supersedes the previous attempt; the old file is of no
-    // further use and keeping it would only confuse a later audit.
-    if (existing && existing.storedName !== storedName) {
-      await deleteSubmissionFile(existing.storedName);
-    }
-
-    revalidatePath("/me/assessments");
-    revalidatePath(`/assessments/${assessmentId}`);
-    revalidatePath("/");
-
-    return NextResponse.json({
-      ok: true,
-      late: decision.late,
-      attempt,
-      resubmitted: Boolean(existing),
-    });
   } catch (error) {
     console.error("Submission failed", error);
+    // The row is the record; an orphaned file with no row is just litter.
+    await deleteSubmissionFile(storedName);
     return NextResponse.json(
       { error: "The submission could not be saved. Nothing was recorded — try again." },
       { status: 500 },
     );
   }
+
+  // A resubmission supersedes the previous attempt; the old file is of no
+  // further use and keeping it would only confuse a later audit. Done last,
+  // so it only happens once the new submission is safely recorded.
+  if (existing && existing.storedName !== storedName) {
+    await deleteSubmissionFile(existing.storedName);
+  }
+
+  revalidatePath("/me/assessments");
+  revalidatePath(`/assessments/${assessmentId}`);
+  revalidatePath("/");
+
+  return NextResponse.json({
+    ok: true,
+    late: decision.late,
+    attempt,
+    resubmitted: Boolean(existing),
+  });
 }

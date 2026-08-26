@@ -42,7 +42,7 @@ Docker the sequence above works with no edits at all.
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm test` | 38 unit tests (Vitest) over the fee, submission and grading rules |
+| `npm test` | 51 unit tests (Vitest) over the fee, submission, date and grading rules |
 | `npm run db:reset` | Drops, re-migrates and re-seeds — the fastest way back to a clean demo |
 | `npm run db:studio` | Prisma Studio, to inspect the data directly |
 
@@ -166,6 +166,17 @@ Registry should not have to remember to bill a student they have just admitted. 
 student with no charge is invisible to the whole fees process, which is the kind
 of gap that surfaces in month three.
 
+### A deadline is a time on the institution's clock
+
+`<input type="datetime-local">` submits a naive wall-clock string with no zone.
+Passing that to `new Date()` interprets it in whatever timezone the *server*
+runs in — so a registrar typing a 17:00 deadline got 11:00 when the server ran
+in Asia/Dhaka, and something else again on a different host. Deadlines decide
+whether work is late, so `src/lib/time.ts` pins the zone down explicitly, in
+both directions: instants are parsed and displayed on the institution's clock,
+while date-only columns (dates of birth, due dates) stay in UTC so they cannot
+shift a day.
+
 ### Money is `Decimal(10,2)`, never a float
 
 Summing `0.1` three times in JavaScript gives `0.30000000000000004`. A fees ledger
@@ -215,7 +226,10 @@ implementation of "is this late", not two that can drift apart.
 
 It is styled as a records office rather than a SaaS dashboard: ink-on-paper,
 ruled tables with no zebra striping, and Spectral / IBM Plex Sans / IBM Plex Mono
-doing three distinct jobs. Anything a person reads off the screen and types into
+doing three distinct jobs. Controls are shadcn/ui-shaped — Radix primitives with
+this project's own tokens rather than shadcn's default palette — which is what
+`src/components/select.tsx` is: the same component structure shadcn ships, over
+`@radix-ui/react-select`. Anything a person reads off the screen and types into
 another system — student IDs, payment references, amounts, dates — is set in
 mono so the columns align and digits cannot be misread. Statuses are rendered as
 **stamps**, because a paper student file is stamped, and because it lets a dense
@@ -285,6 +299,25 @@ I re-ran the attack against the running app to confirm the fix rather than
 assuming it: a PDF uploaded as `text/html` now comes back as `application/pdf`.
 Worth being plain about — a model wrote that route, I reviewed it and missed
 both, and a second automated pass found them. Review layers are not redundant.
+
+A deliberate bug-hunting pass afterwards turned up three more, all of the same
+character — code that looked obviously correct and was not:
+
+- **The timezone bug above.** Reproduced by typing a 17:00 deadline and reading
+  11:00 back off the page.
+- **Dates parsed by string concatenation.** `paidAt + "T12:00:00Z"` produced an
+  Invalid Date for anything that was not exactly `YYYY-MM-DD`, and the schema
+  had been permissive enough to let a full ISO timestamp through. The schemas
+  are now strict about the shape and `lib/time.ts` owns the parse.
+- **The upload wrote the database row before the file.** If the disk write
+  failed on a resubmission, the row took the new filename, size and timestamp
+  while `storedName` still pointed at the previous attempt — the student saw
+  one file and the marker downloaded another, and the error message claimed
+  nothing had been recorded. The file is now written first, under a random
+  name, and the row only follows once the bytes are safely down.
+
+Plus a one-month due date that rolled 31 January to 3 March, and a summary line
+that was the one place in the codebase quietly adding money as floats.
 
 **How I verified it**, rather than assuming
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EnrolmentStatus } from "@/generated/prisma/enums";
+import { dateOnlyToUtc, wallClockToInstant } from "@/lib/time";
 
 /**
  * Every mutation validates here before it reaches Prisma. Server Actions are
@@ -13,11 +14,29 @@ const moneyString = z
   .regex(/^\d+(\.\d{1,2})?$/, "Enter an amount like 1250 or 1250.50")
   .refine((v) => Number(v) > 0, "Amount must be greater than zero");
 
-const isoDate = z
+/**
+ * A calendar date, exactly as an <input type="date"> submits it.
+ *
+ * Deliberately strict. Accepting "anything Date.parse understands" let a full
+ * ISO timestamp through, which the actions then concatenated another time onto
+ * ("2026-08-27T10:00:00Z" + "T12:00:00Z") and handed to Prisma as an Invalid
+ * Date. Pinning the shape here is what makes the parse downstream total.
+ */
+const dateOnly = z
   .string()
   .trim()
-  .min(1, "Required")
-  .refine((v) => !Number.isNaN(Date.parse(v)), "Enter a valid date");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a date as YYYY-MM-DD")
+  .refine((v) => dateOnlyToUtc(v) !== null, "That date does not exist");
+
+/** A local date and time, as an <input type="datetime-local"> submits it. */
+const localDateTime = z
+  .string()
+  .trim()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/,
+    "Enter a date and time",
+  )
+  .refine((v) => wallClockToInstant(v) !== null, "That date and time does not exist");
 
 export const studentSchema = z.object({
   fullName: z
@@ -31,7 +50,7 @@ export const studentSchema = z.object({
     .toLowerCase()
     .email("Enter a valid email address")
     .max(180),
-  dateOfBirth: isoDate.refine((v) => {
+  dateOfBirth: dateOnly.refine((v) => {
     const dob = new Date(v);
     const age =
       (Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
@@ -49,7 +68,7 @@ export const studentSchema = z.object({
 export const paymentSchema = z.object({
   studentId: z.string().min(1),
   amount: moneyString,
-  paidAt: isoDate,
+  paidAt: dateOnly,
   reference: z
     .string()
     .trim()
@@ -63,17 +82,13 @@ export const chargeSchema = z.object({
   studentId: z.string().min(1),
   description: z.string().trim().min(2, "Describe the charge").max(120),
   amount: moneyString,
-  dueDate: isoDate,
+  dueDate: dateOnly,
 });
 
 export const assessmentSchema = z.object({
   title: z.string().trim().min(2, "Enter a title").max(140),
   module: z.string().trim().min(2, "Enter a module").max(80),
-  dueAt: z
-    .string()
-    .trim()
-    .min(1, "Set a deadline")
-    .refine((v) => !Number.isNaN(Date.parse(v)), "Enter a valid date and time"),
+  dueAt: localDateTime,
 });
 
 export const gradeSchema = z.object({

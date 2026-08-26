@@ -12,6 +12,21 @@ export function formatMoney(value: string | number): string {
   return Number.isFinite(n) ? money.format(n) : "—";
 }
 
+/**
+ * Two kinds of date, and they must not be formatted the same way.
+ *
+ *  * Date-only columns (`dueDate`, `dateOfBirth`) are stored as Postgres
+ *    `date` and read back as midnight UTC. Rendering those in a local zone
+ *    moves them a day for anyone west of Greenwich, so they stay in UTC.
+ *
+ *  * Instants (`dueAt`, `submittedAt`, `paidAt`) are moments in time, and
+ *    everyone looking at this system is looking at one institution's clock.
+ *    Rendering them in UTC meant a deadline typed as 17:00 was displayed as
+ *    16:00 in summer — or, on a server in another zone, something wilder.
+ *    They are shown in the institution's timezone instead.
+ */
+export const INSTITUTION_TIME_ZONE = "Europe/London";
+
 const dateFmt = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
   month: "short",
@@ -25,7 +40,7 @@ const dateTimeFmt = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
-  timeZone: "UTC",
+  timeZone: INSTITUTION_TIME_ZONE,
 });
 
 export function formatDate(value: Date | string): string {

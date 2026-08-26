@@ -13,6 +13,7 @@ import {
   Th,
 } from "@/components/ui";
 import { formatDate, formatMoney, relativeToNow } from "@/lib/format";
+import { sumDecimals } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,8 @@ export default async function DashboardPage() {
   await staffOnly();
   const overview = await getRegistryOverview();
 
-  const totalOverdue = overview.overdue.reduce(
-    (acc, s) => acc + Number(s.fees.overdueAmount),
-    0,
+  const totalOverdue = sumDecimals(
+    overview.overdue.map((s) => s.fees.overdueAmount),
   );
 
   const nothingToDo =
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
             title="Fees in arrears"
             hint={
               overview.overdue.length > 0
-                ? `${overview.overdue.length} ${overview.overdue.length === 1 ? "account" : "accounts"} past their due date · ${formatMoney(totalOverdue)} outstanding`
+                ? `${overview.overdue.length} ${overview.overdue.length === 1 ? "account" : "accounts"} past their due date · ${formatMoney(totalOverdue.toFixed(2))} outstanding`
                 : "A balance only counts as arrears once a charge has passed its due date."
             }
             action={

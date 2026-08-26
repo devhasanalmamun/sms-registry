@@ -16,6 +16,8 @@ import {
 } from "@/components/ui";
 import { StatusStamp } from "@/components/status-stamp";
 import { formatDate, formatMoney } from "@/lib/format";
+import { Prisma } from "@/generated/prisma/client";
+import { ZERO } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -68,18 +70,26 @@ export default async function FeesPage({
     }
   });
 
+  // Summed as Decimal, not as JavaScript numbers. These are the figures a
+  // bursar reconciles against a bank statement; the rest of the codebase is
+  // careful about this and the summary line has no business being the one
+  // place that quietly converts money to floats.
   const totals = all.reduce(
     (acc, s) => ({
-      charged: acc.charged + Number(s.fees.charged),
-      paid: acc.paid + Number(s.fees.paid),
-      outstanding: acc.outstanding + Math.max(0, Number(s.fees.balance)),
-      overdue: acc.overdue + Number(s.fees.overdueAmount),
-      credit: acc.credit + Math.max(0, -Number(s.fees.balance)),
+      charged: acc.charged.plus(s.fees.charged),
+      paid: acc.paid.plus(s.fees.paid),
+      outstanding: acc.outstanding.plus(
+        Prisma.Decimal.max(ZERO, s.fees.balance),
+      ),
+      overdue: acc.overdue.plus(s.fees.overdueAmount),
+      credit: acc.credit.plus(Prisma.Decimal.max(ZERO, s.fees.balance.negated())),
     }),
-    { charged: 0, paid: 0, outstanding: 0, overdue: 0, credit: 0 },
+    { charged: ZERO, paid: ZERO, outstanding: ZERO, overdue: ZERO, credit: ZERO },
   );
 
-  const collected = totals.charged > 0 ? (totals.paid / totals.charged) * 100 : 0;
+  const collected = totals.charged.greaterThan(0)
+    ? totals.paid.dividedBy(totals.charged).times(100)
+    : ZERO;
 
   return (
     <>
@@ -95,18 +105,18 @@ export default async function FeesPage({
           hint={`${collected.toFixed(1)}% of everything charged has been received.`}
         />
         <div className="grid grid-cols-2 divide-x divide-y divide-rule sm:grid-cols-5">
-          <Figure value={formatMoney(totals.charged)} label="Charged" />
-          <Figure value={formatMoney(totals.paid)} label="Received" tone="sage" />
-          <Figure value={formatMoney(totals.outstanding)} label="Outstanding" />
+          <Figure value={formatMoney(totals.charged.toFixed(2))} label="Charged" />
+          <Figure value={formatMoney(totals.paid.toFixed(2))} label="Received" tone="sage" />
+          <Figure value={formatMoney(totals.outstanding.toFixed(2))} label="Outstanding" />
           <Figure
-            value={formatMoney(totals.overdue)}
+            value={formatMoney(totals.overdue.toFixed(2))}
             label="In arrears"
-            tone={totals.overdue > 0 ? "seal" : "neutral"}
+            tone={totals.overdue.greaterThan(0) ? "seal" : "neutral"}
           />
           <Figure
-            value={formatMoney(totals.credit)}
+            value={formatMoney(totals.credit.toFixed(2))}
             label="Held in credit"
-            tone={totals.credit > 0 ? "amber" : "neutral"}
+            tone={totals.credit.greaterThan(0) ? "amber" : "neutral"}
           />
         </div>
       </Panel>

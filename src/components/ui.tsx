@@ -217,20 +217,6 @@ export function Input({
   );
 }
 
-export function Select({
-  className,
-  invalid,
-  ...rest
-}: ComponentProps<"select"> & { invalid?: boolean }) {
-  return (
-    <select
-      {...rest}
-      aria-invalid={invalid || undefined}
-      className={cn(controlBase, invalid ? "border-seal" : "border-rule-strong", className)}
-    />
-  );
-}
-
 export function Textarea({
   className,
   ...rest

@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button, Field, Input, Notice, Select } from "@/components/ui";
+import { Button, Field, Input, Notice } from "@/components/ui";
+import { SelectField } from "@/components/select";
 import { IDLE } from "@/server/action-state";
 import { addCharge, recordPayment } from "@/server/actions";
 
@@ -76,13 +77,18 @@ export function PaymentForm({ studentId }: { studentId: string }) {
       </Field>
 
       <Field label="Method" htmlFor="method" error={errors.method}>
-        <Select id="method" name="method" defaultValue="Bank transfer">
-          <option>Bank transfer</option>
-          <option>Card</option>
-          <option>Cash</option>
-          <option>Sponsor / bursary</option>
-          <option>Student loan</option>
-        </Select>
+        <SelectField
+          id="method"
+          name="method"
+          defaultValue="Bank transfer"
+          options={[
+            { value: "Bank transfer", label: "Bank transfer" },
+            { value: "Card", label: "Card" },
+            { value: "Cash", label: "Cash" },
+            { value: "Sponsor / bursary", label: "Sponsor / bursary" },
+            { value: "Student loan", label: "Student loan" },
+          ]}
+        />
       </Field>
 
       <Field label="Note" htmlFor="note" error={errors.note} className="sm:col-span-2">

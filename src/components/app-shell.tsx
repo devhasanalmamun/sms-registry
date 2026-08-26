@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/db";
 import { getActingStudent, getSession } from "@/lib/session";
-import { switchRole } from "@/server/session-actions";
 import { NavLink } from "@/components/nav-link";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 /**
  * The shell.
@@ -31,7 +31,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   const students = await prisma.student.findMany({
     orderBy: { studentId: "asc" },
-    select: { id: true, fullName: true, studentId: true, status: true },
+    select: { id: true, fullName: true, studentId: true },
   });
 
   const acting = await getActingStudent();
@@ -62,47 +62,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </ul>
         </nav>
 
-        <form
-          action={switchRole}
-          className="border-t border-white/10 px-5 py-4 text-paper"
-        >
-          <label
-            htmlFor="role"
-            className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/45"
-          >
-            Viewing as
-          </label>
-          <select
-            id="role"
-            name="role"
-            defaultValue={
-              session.role === "staff" ? "staff" : `student:${session.studentId}`
-            }
-            className="mt-1.5 w-full border border-white/20 bg-white/5 px-2 py-1.5 text-sm text-paper focus:outline-none focus:ring-1 focus:ring-white/60"
-          >
-            <option value="staff" className="text-ink">
-              Registry staff
-            </option>
-            <optgroup label="Student" className="text-ink">
-              {students.map((s) => (
-                <option key={s.id} value={`student:${s.id}`} className="text-ink">
-                  {s.fullName} · {s.studentId}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <button
-            type="submit"
-            className="mt-2 w-full border border-white/25 px-2 py-1.5 text-xs font-medium text-paper transition-colors hover:bg-white/10"
-          >
-            Switch view
-          </button>
-          <p className="mt-2.5 text-[0.6875rem] leading-snug text-white/40">
-            {acting
-              ? `Seeing exactly what ${acting.fullName.split(" ")[0]} sees. Withheld results are not fetched.`
-              : "Full Registry access. Stands in for staff sign-in."}
-          </p>
-        </form>
+        <RoleSwitcher
+          value={
+            session.role === "staff" ? "staff" : `student:${session.studentId}`
+          }
+          students={students}
+          actingFirstName={acting?.fullName.split(" ")[0]}
+        />
       </aside>
 
       <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 lg:px-10">

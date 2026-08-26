@@ -3,15 +3,11 @@ import { staffOnly } from "@/lib/guards";
 import { listProgrammes, listStudents } from "@/server/queries";
 import type { EnrolmentStatus } from "@/generated/prisma/enums";
 import {
-  Button,
-  LinkButton,
   Code,
   EmptyState,
-  Field,
-  Input,
+  LinkButton,
   PageHeader,
   Panel,
-  Select,
   Stamp,
   Table,
   Td,
@@ -19,6 +15,7 @@ import {
 } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 import { StatusStamp } from "@/components/status-stamp";
+import { StudentFilters } from "@/components/student-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +38,8 @@ const statusLabel: Record<string, string> = {
 /**
  * The student register.
  *
- * Filters are a plain GET form: the resulting URL is shareable, survives a
- * refresh, and works without JavaScript. Registry staff live in this screen and
- * send each other links to it.
+ * Filters are a plain GET form: the resulting URL is shareable and survives a
+ * refresh. Registry staff live in this screen and send each other links to it.
  */
 export default async function StudentsPage({
   searchParams,
@@ -54,7 +50,10 @@ export default async function StudentsPage({
   const params = await searchParams;
 
   const search = typeof params.q === "string" ? params.q : "";
-  const programmeId = typeof params.programme === "string" ? params.programme : "";
+  const rawProgramme = typeof params.programme === "string" ? params.programme : "";
+  // "any" is the dropdown's explicit no-filter value — Radix Select has no
+  // empty-string option, and an empty value is indistinguishable from unset.
+  const programmeId = rawProgramme === "any" ? "" : rawProgramme;
   const status =
     typeof params.status === "string" && STATUSES.includes(params.status as EnrolmentStatus)
       ? (params.status as EnrolmentStatus | "ALL")
@@ -82,65 +81,21 @@ export default async function StudentsPage({
       />
 
       <Panel className="mb-6">
-        <form
-          method="get"
-          className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]"
-        >
-          <Field label="Search" htmlFor="q" hint="Name, student ID, email or programme">
-            <Input
-              id="q"
-              name="q"
-              defaultValue={search}
-              placeholder="Okafor, SMS-2026-0001, msc…"
-            />
-          </Field>
-
-          <Field label="Programme" htmlFor="programme">
-            <Select id="programme" name="programme" defaultValue={programmeId}>
-              <option value="">Any programme</option>
-              {programmes.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.code} — {p.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field label="Status" htmlFor="status">
-            <Select id="status" name="status" defaultValue={status}>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {statusLabel[s]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <div className="flex items-end gap-2">
-            <Button type="submit" variant="primary">
-              Apply
-            </Button>
-            {filtered ? (
-              <LinkButton variant="ghost" href="/students">
-                Clear
-              </LinkButton>
-            ) : null}
-          </div>
-
-          <label className="flex items-center gap-2 text-sm text-ink-soft sm:col-span-2 lg:col-span-4">
-            <input
-              type="checkbox"
-              name="arrears"
-              value="1"
-              defaultChecked={overdueOnly}
-              className="size-4 accent-[#7a2e2e]"
-            />
-            Only students in arrears
-            <span className="text-xs text-ink-faint">
-              (a charge past its due date, not simply a balance owing)
-            </span>
-          </label>
-        </form>
+        <StudentFilters
+          search={search}
+          programmeId={programmeId}
+          status={status}
+          overdueOnly={overdueOnly}
+          filtered={filtered}
+          programmes={programmes.map((p) => ({
+            value: p.id,
+            label: `${p.code} — ${p.name}`,
+          }))}
+          statuses={STATUSES.map((value) => ({
+            value,
+            label: statusLabel[value],
+          }))}
+        />
       </Panel>
 
       <Panel>

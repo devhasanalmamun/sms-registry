@@ -8,6 +8,7 @@ import { requireStaff } from "@/lib/session";
 import { allocateStudentId } from "@/lib/student-id";
 import { parseMoney } from "@/lib/money";
 import { summariseFees } from "@/lib/fees";
+import { addMonthsDateOnly, dateOnlyToUtc, wallClockToInstant } from "@/lib/time";
 import {
   assessmentSchema,
   chargeSchema,
@@ -87,7 +88,7 @@ export async function enrolStudent(
       const student = await tx.student.create({
         data: {
           ...input,
-          dateOfBirth: new Date(`${input.dateOfBirth}T00:00:00Z`),
+          dateOfBirth: dateOnlyToUtc(input.dateOfBirth)!,
           studentId: await allocateStudentId(tx),
         },
       });
@@ -101,13 +102,9 @@ export async function enrolStudent(
           studentId: student.id,
           description: `Tuition — ${programme.name} (year ${input.academicYear})`,
           amount: programme.feeAmount,
-          dueDate: new Date(
-            Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth() + 1,
-              today.getUTCDate(),
-            ),
-          ),
+          // Payable in a month. Clamped to the month end, so enrolling on
+          // 31 January is due 28 February rather than rolling into March.
+          dueDate: addMonthsDateOnly(today, 1),
         },
       });
 
@@ -143,7 +140,7 @@ export async function updateStudent(
       where: { id },
       data: {
         ...parsed.data,
-        dateOfBirth: new Date(`${parsed.data.dateOfBirth}T00:00:00Z`),
+        dateOfBirth: dateOnlyToUtc(parsed.data.dateOfBirth)!,
       },
     });
   } catch (error) {
@@ -193,7 +190,9 @@ export async function recordPayment(
       data: {
         studentId: input.studentId,
         amount,
-        paidAt: new Date(`${input.paidAt}T12:00:00Z`),
+        // Midday UTC: a payment is recorded against a day, not a moment,
+        // and midday keeps it on that day in every timezone it is read in.
+        paidAt: new Date(dateOnlyToUtc(input.paidAt)!.getTime() + 12 * 60 * 60 * 1000),
         reference: input.reference,
         method: input.method,
         note: input.note || null,
@@ -267,7 +266,7 @@ export async function addCharge(
         studentId: input.studentId,
         description: input.description,
         amount,
-        dueDate: new Date(`${input.dueDate}T00:00:00Z`),
+        dueDate: dateOnlyToUtc(input.dueDate)!,
       },
     });
   } catch (error) {
@@ -301,7 +300,9 @@ export async function createAssessment(
       data: {
         title: parsed.data.title,
         module: parsed.data.module,
-        dueAt: new Date(parsed.data.dueAt),
+        // The registrar typed a time on the institution's clock, not the
+        // server's. See lib/time.
+        dueAt: wallClockToInstant(parsed.data.dueAt)!,
       },
     });
     id = created.id;

@@ -9,8 +9,8 @@ import {
   Notice,
   Panel,
   PanelHeader,
-  Select,
 } from "@/components/ui";
+import { SelectField } from "@/components/select";
 import { IDLE, type ActionState } from "@/server/action-state";
 
 type Programme = { id: string; code: string; name: string; feeAmount: string };
@@ -122,22 +122,19 @@ export function StudentForm({
               : "The programme fee is charged automatically on enrolment."
           }
         >
-          <Select
+          <SelectField
             id="programmeId"
             name="programmeId"
-            defaultValue={defaults.programmeId ?? ""}
+            defaultValue={defaults.programmeId}
+            placeholder="Choose a programme"
             invalid={Boolean(errors.programmeId)}
             required
-          >
-            <option value="" disabled>
-              Choose a programme
-            </option>
-            {programmes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} — {p.name} (£{p.feeAmount})
-              </option>
-            ))}
-          </Select>
+            options={programmes.map((p) => ({
+              value: p.id,
+              label: `${p.code} — ${p.name}`,
+              hint: `£${p.feeAmount}`,
+            }))}
+          />
         </Field>
 
         <Field label="Academic year" htmlFor="academicYear" error={errors.academicYear}>
@@ -159,17 +156,18 @@ export function StudentForm({
           error={errors.status}
           hint="Withdrawn students keep their record and their outstanding balance."
         >
-          <Select
+          <SelectField
             id="status"
             name="status"
             defaultValue={defaults.status ?? "ENROLLED"}
             invalid={Boolean(errors.status)}
-          >
-            <option value="ENROLLED">Enrolled</option>
-            <option value="DEFERRED">Deferred</option>
-            <option value="WITHDRAWN">Withdrawn</option>
-            <option value="COMPLETED">Completed</option>
-          </Select>
+            options={[
+              { value: "ENROLLED", label: "Enrolled" },
+              { value: "DEFERRED", label: "Deferred" },
+              { value: "WITHDRAWN", label: "Withdrawn" },
+              { value: "COMPLETED", label: "Completed" },
+            ]}
+          />
         </Field>
 
         <div className="flex items-center gap-3 sm:col-span-2">
