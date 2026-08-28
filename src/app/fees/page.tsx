@@ -97,13 +97,13 @@ export default async function FeesPage({
     <>
       <PageHeader
         title="Fees"
-        lede="Charges raised, payments received, and who is actually behind. A balance is not arrears until a charge has passed its due date."
+        lede="Charges raised, payments received, and who is actually behind. Most students owe something for most of the year — that is how instalments work. Only a charge that has passed its due date counts as arrears, and only those need chasing."
       />
 
       <Panel className="mb-6">
         <PanelHeader
           title="Position across the register"
-          hint={`${collected.toFixed(1)}% of everything charged has been received.`}
+          hint={`${collected.toFixed(1)}% of everything charged has been received. "Outstanding" is everything still owed; "in arrears" is the part of it that is late.`}
         />
         <Footing>
           <Figure value={formatMoney(totals.charged.toFixed(2))} label="Charged" />

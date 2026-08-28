@@ -92,6 +92,7 @@ export default async function StudentPage({
   return (
     <>
       <PageHeader
+        trail={{ href: "/students", label: "All students" }}
         reference={student.studentId}
         title={student.fullName}
         lede={`${student.programme.code} — ${student.programme.name} · Year ${student.academicYear} · Enrolled ${formatDate(student.enrolledAt)}`}

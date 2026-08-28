@@ -80,7 +80,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
     <DataTable
       columns={columns}
       data={rows}
-      mark={(r) => (r.isLate ? { tone: "watch", label: "Submitted late" } : null)}
+      mark={(r) => (r.isLate ? { tone: "watch", label: "Late" } : null)}
       initialSorting={[{ id: "submittedMs", desc: true }]}
       caption="Submitted work"
     />

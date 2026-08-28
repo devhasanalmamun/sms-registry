@@ -85,7 +85,7 @@ export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
     <DataTable
       columns={chargeColumns}
       data={rows}
-      mark={(r) => (r.pastDue ? { tone: "flag", label: "Past its due date" } : null)}
+      mark={(r) => (r.pastDue ? { tone: "flag", label: "Overdue" } : null)}
       minWidth="0"
       initialSorting={[{ id: "dueMs", desc: false }]}
       caption="Charges raised"

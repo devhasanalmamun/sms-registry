@@ -165,9 +165,9 @@ export function MarksheetTable({
       data={rows}
       mark={(r) =>
         r.resultId && !r.published
-          ? { tone: "flag", label: "Result withheld" }
+          ? { tone: "flag", label: "Withheld" }
           : r.submission?.isLate
-            ? { tone: "watch", label: "Submitted late" }
+            ? { tone: "watch", label: "Late" }
             : null
       }
       minWidth="56rem"

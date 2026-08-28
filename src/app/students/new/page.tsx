@@ -13,6 +13,7 @@ export default async function NewStudentPage() {
   return (
     <>
       <PageHeader
+        trail={{ href: "/students", label: "All students" }}
         title="Enrol a student"
         lede="Enrolling raises the programme's tuition charge at the same time, so the student appears in the fees ledger straight away."
       />

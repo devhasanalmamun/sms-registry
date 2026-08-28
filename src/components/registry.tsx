@@ -66,12 +66,9 @@ export function Stamp({
     <Badge
       variant="outline"
       className={cn(
-        "colhead h-auto border px-1.5 py-[0.1875rem] text-[0.625rem] leading-none",
+        "h-auto border px-1.5 py-0.5 text-xs font-medium leading-tight",
         tones[tone],
-        // `struck` marks the one state a student is told about but not given:
-        // a result held back. It gets the heavier rule so it reads as applied
-        // to the record rather than describing it.
-        struck && "border-2 px-2.5 py-1.5 text-[0.6875rem] tracking-[0.14em]",
+        struck && "border-2 px-2.5 py-1 text-sm",
         className,
       )}
     >
@@ -84,19 +81,33 @@ export function Stamp({
 /* Surfaces                                                                    */
 /* -------------------------------------------------------------------------- */
 
-/** A sheet: a shadcn Card, squared off, its padding removed so tables rule to the edge. */
+/**
+ * A section of the sheet.
+ *
+ * Not a card. A page made of boxes inside boxes asks the reader to work out the
+ * nesting before they can read anything, and every screen here is one continuous
+ * document. Sections are separated by a rule and a heading, which is how a
+ * printed register does it.
+ */
 export function Panel({ className, ...rest }: ComponentProps<typeof Card>) {
   return (
     <Card
       {...rest}
       className={cn(
-        "min-w-0 gap-0 border border-rule py-0 shadow-none ring-0",
+        "min-w-0 gap-0 rounded-none border-0 border-t border-rule-hard bg-transparent py-0 shadow-none ring-0",
         className,
       )}
     />
   );
 }
 
+/**
+ * A section heading, with the sentence that says what the section is for.
+ *
+ * The hint is not decoration: "owing" and "in arrears" are different things in
+ * this domain, and a reader who does not know that will misread the screen. So
+ * the screen says it.
+ */
 export function PanelHeader({
   title,
   hint,
@@ -107,12 +118,12 @@ export function PanelHeader({
   action?: ReactNode;
 }) {
   return (
-    <CardHeader className="items-baseline border-b border-rule px-4 py-3 [--card-spacing:--spacing(3)]">
-      <CardTitle className="font-sans text-[0.9375rem] font-semibold tracking-[-0.005em]">
+    <CardHeader className="items-baseline px-0 pt-4 pb-3 [--card-spacing:--spacing(3)]">
+      <CardTitle className="font-sans text-base font-semibold tracking-[-0.005em]">
         {title}
       </CardTitle>
       {hint ? (
-        <CardDescription className="text-[0.8125rem] leading-snug">
+        <CardDescription className="text-[0.8125rem] leading-snug text-graphite">
           {hint}
         </CardDescription>
       ) : null}
@@ -124,34 +135,45 @@ export function PanelHeader({
 /**
  * The head of a page.
  *
- * No decorative eyebrow. `reference` is for the record this screen *is* — a
- * student number, a module code — set in mono because that is what a reference
- * is for: reading down a phone line. Screens that are not about one record
- * simply do not pass one, rather than captioning themselves with the name of
- * the nav item that got you here.
+ * `trail` puts you back where you came from in one click and, more importantly,
+ * says where you are — a detail screen with no route back is the commonest way
+ * to lose a reader. `reference` is the record this screen *is*: a student
+ * number, a module code, set in mono because that is what you read down a phone.
  */
 export function PageHeader({
+  trail,
   reference,
   title,
   lede,
   action,
 }: {
+  trail?: { href: string; label: string };
   reference?: ReactNode;
   title: string;
   lede?: ReactNode;
   action?: ReactNode;
 }) {
   return (
-    <header className="mb-6 border-b-2 border-ink pb-3">
+    <header className="mb-5">
+      {trail ? (
+        <Link
+          href={trail.href}
+          className="mb-3 inline-flex items-center gap-1 text-sm text-stamp hover:underline"
+        >
+          <span aria-hidden>&larr;</span> {trail.label}
+        </Link>
+      ) : null}
+
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           {reference ? (
             <p className="mb-1.5 font-mono text-xs text-graphite">{reference}</p>
           ) : null}
-          <h1 className="masthead text-[2rem] sm:text-[2.5rem]">{title}</h1>
+          <h1 className="masthead text-[1.75rem] sm:text-[2.125rem]">{title}</h1>
         </div>
         {action}
       </div>
+
       {lede ? (
         <p className="mt-3 max-w-3xl text-[0.9375rem] leading-relaxed text-graphite">
           {lede}

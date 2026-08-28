@@ -21,25 +21,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Tone } from "@/components/registry";
+import { Stamp, type Tone } from "@/components/registry";
 import { cn } from "@/lib/utils";
 
 /**
- * The register, as continuous stationery.
+ * The register.
  *
  * TanStack Table drives shadcn's Table primitives, as shadcn's own data-table
- * pattern does. Three things are added on top, and each is doing a job rather
- * than a decoration:
+ * pattern does. Two things are added on top, and both are for the reader:
  *
  *  · **Banded rows.** A fee row is eight columns wide and the eye loses its
- *    place halfway across. Greenbar paper solved that in 1965 by printing pale
- *    bands, and it still works.
- *  · **An ink column head.** A printed register's headings sit in a solid bar,
- *    which is also the honest way to say "this row is not data".
- *  · **A margin.** The first column has no heading and is blank on most rows.
- *    A mark appears there only where the row wants something — money past due,
- *    work handed in late, a result still withheld. Scanning the margin is
- *    triage, and a register in good order reads as an empty left edge.
+ *    place halfway across. Greenbar paper solved that in 1965 and it still
+ *    works.
+ *  · **An Attention column, in words.** An earlier version marked these rows
+ *    with a coloured bar in a blank margin. It looked considered and was
+ *    unreadable: nobody can learn what a red bar means from a tooltip. If a row
+ *    needs chasing, the table says "In arrears".
  *
  * Sorting is client-side because Registry staff re-sort constantly, and always
  * by the column in front of them: who owes most, what is due first, which
@@ -59,14 +56,6 @@ declare module "@tanstack/react-table" {
 
 export type { ColumnDef };
 
-const markTones: Record<Tone, string> = {
-  neutral: "text-graphite",
-  flag: "text-flag",
-  watch: "text-watch",
-  clear: "text-clear",
-  quiet: "text-dim",
-};
-
 export function DataTable<TData>({
   columns,
   data,
@@ -82,7 +71,7 @@ export function DataTable<TData>({
   /** The table scrolls sideways below this; it never squeezes a name onto two lines. */
   minWidth?: string;
   alignTop?: boolean;
-  /** What, if anything, this row wants of you. Renders the margin mark. */
+  /** What, if anything, this row wants of you. Renders the Attention column. */
   mark?: (row: TData) => { tone: Tone; label: string } | null;
   caption?: string;
 }) {
@@ -109,13 +98,9 @@ export function DataTable<TData>({
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow
             key={headerGroup.id}
-            className="border-0 bg-foreground hover:bg-foreground"
+            className="border-0 border-b-2 border-rule-hard bg-band-deep hover:bg-band-deep"
           >
-            {mark ? (
-              <TableHead className="w-7 p-0">
-                <span className="sr-only">Needs attention</span>
-              </TableHead>
-            ) : null}
+            {mark ? <TableHead className="colhead px-3 py-2 text-left text-graphite">Attention</TableHead> : null}
 
             {headerGroup.headers.map((header) => {
               const meta = header.column.columnDef.meta;
@@ -142,7 +127,7 @@ export function DataTable<TData>({
                           : undefined
                   }
                   className={cn(
-                    "colhead h-auto px-3 py-2 text-background/70",
+                    "colhead h-auto px-3 py-2 text-graphite",
                     meta?.numeric ? "text-right" : "text-left",
                     sortable && "p-0",
                     meta?.cellClassName,
@@ -154,9 +139,9 @@ export function DataTable<TData>({
                       size="sm"
                       onClick={header.column.getToggleSortingHandler()}
                       className={cn(
-                        "colhead h-auto w-full px-3 py-2 text-background/70",
-                        "hover:bg-background/12 hover:text-background",
-                        sorted && "text-background",
+                        "colhead h-auto w-full px-3 py-2 text-graphite",
+                        "hover:bg-rule/60 hover:text-foreground",
+                        sorted && "text-stamp",
                         meta?.numeric ? "justify-end" : "justify-start",
                       )}
                     >
@@ -192,16 +177,14 @@ export function DataTable<TData>({
               )}
             >
               {mark ? (
-                <TableCell className="w-7 py-2.5 pl-3 pr-0">
+                <TableCell className="px-3 py-2.5">
                   {flagged ? (
-                    <span
-                      className={markTones[flagged.tone]}
-                      title={flagged.label}
-                    >
-                      <span className="margin-mark" />
-                      <span className="sr-only">{flagged.label}</span>
+                    <Stamp tone={flagged.tone}>{flagged.label}</Stamp>
+                  ) : (
+                    <span className="text-sm text-dim" aria-label="Nothing outstanding">
+                      &mdash;
                     </span>
-                  ) : null}
+                  )}
                 </TableCell>
               ) : null}
 

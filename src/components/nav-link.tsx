@@ -7,9 +7,12 @@ import { cn } from "@/lib/utils";
 /**
  * An entry in the index margin.
  *
- * Only the current section carries its description. Four permanent subtitles
- * are four lines of noise once you have used the thing twice; one, on the
- * section you are actually in, tells you what this screen is for.
+ * Every entry carries its description, not just the active one. Hiding them
+ * saved four lines and cost a first-time reader the answer to "what is behind
+ * this link" — which is the whole question navigation exists to answer.
+ *
+ * The current section is marked by a rule down its left edge and the house
+ * colour, so it reads as selected without a filled block.
  */
 export function NavLink({
   href,
@@ -32,18 +35,23 @@ export function NavLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "block px-4 py-2 text-sm transition-colors",
+        "block border-l-[3px] py-2 pl-3 pr-4 transition-colors",
         active
-          ? "bg-ink font-medium text-paper"
-          : "text-graphite hover:bg-card hover:text-foreground",
+          ? "border-stamp bg-card"
+          : "border-transparent hover:border-rule-hard hover:bg-card/70",
       )}
     >
-      {label}
-      {active ? (
-        <span className="mt-0.5 block text-xs leading-snug text-paper/55">
-          {note}
-        </span>
-      ) : null}
+      <span
+        className={cn(
+          "block text-sm",
+          active ? "font-semibold text-stamp" : "font-medium text-foreground",
+        )}
+      >
+        {label}
+      </span>
+      <span className="mt-0.5 block text-xs leading-snug text-graphite">
+        {note}
+      </span>
     </Link>
   );
 }

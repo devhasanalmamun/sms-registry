@@ -109,7 +109,7 @@ export function FeesTable({ rows }: { rows: FeeRow[] }) {
       data={rows}
       mark={(r) =>
         r.isOverdue
-          ? { tone: "flag", label: "Past a due date" }
+          ? { tone: "flag", label: "In arrears" }
           : r.inCredit
             ? { tone: "watch", label: "In credit" }
             : null

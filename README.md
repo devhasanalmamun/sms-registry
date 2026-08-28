@@ -229,54 +229,60 @@ implementation of "is this late", not two that can drift apart.
 The component layer is **shadcn/ui**, installed with the CLI (`components.json`
 is committed). Everything under `src/components/ui` is exactly what the registry
 generated and is left alone so it can be updated; `src/components/registry.tsx`
-is the layer above, where this domain's compositions live — a status marker is a
-`Badge`, a sheet is a `Card`, a labelled control is a `Label` plus a `Field`.
+is the layer above, where this domain's compositions live.
 
-**The material is continuous stationery** — the banded "greenbar" paper
-university registries printed marksheets and fee ledgers onto, and the ruled
-official forms that go with it. Every visual decision comes from that, and each
-one is doing a job:
+The reference is the printed student register — the banded "greenbar" paper
+university registries ran marksheets and fee ledgers off onto, and the ruled
+official forms around it. Four rules follow from that, and each is there for the
+reader rather than for the look:
 
+- **The page is one sheet.** Sections are divided by a rule and a heading, not
+  stacked into cards. A screen of boxes inside boxes makes somebody work out the
+  nesting before they can read anything.
 - **Banded rows.** A fee row is eight columns wide and the eye loses its place
   halfway across. Greenbar paper solved that in 1965 and it still works.
-- **An ink column head.** A printed register's headings sit in a solid bar,
-  which is also the honest way to say "this row is not data".
-- **A margin.** Every table opens with a narrow column that has no heading and
-  is blank on most rows. A mark appears there only where the row wants
-  something — money past due, work handed in late, a result still withheld.
-  Scanning the margin is triage, and a register in good order reads as an empty
-  left edge. It is deliberately absent from lists that are *entirely*
-  exceptions, like the arrears panel: a mark on every row restates the filter
-  instead of picking anything out.
+- **Exceptions are named, not coded.** Rows that need chasing say "In arrears",
+  "Late", "Withheld" in an Attention column. An earlier version marked them with
+  a coloured bar in a blank margin, which looked considered and was unreadable:
+  nobody learns what a red bar means from a tooltip.
+- **Nothing is filled with black.** Weight comes from rules and from one house
+  colour — a stamp blue that marks the primary action and the section you are
+  in, and does nothing else, so "blue means you can act on it" stays true.
 
-Nothing about the look is achieved by forking a shadcn component. It is done in
-`globals.css`, by giving shadcn's own semantic tokens registry values:
-
-| shadcn token | Registry value |
-| --- | --- |
-| `background` / `foreground` | ground / ink |
-| `card` | the sheet |
-| `muted` | the band |
-| `primary` | ink |
-| `destructive` | flag |
-| `border` / `input` | the two weights of ruling |
-| `radius` | `0` — printed forms are not rounded |
-
-There are three signal colours and no others: **flag** (money past its due date,
-a mark withheld), **watch** (late work, a deadline closing) and **clear**
+Beside it are three signal colours and no others: **flag** (money past its due
+date, a mark withheld), **watch** (late work, a deadline closing) and **clear**
 (settled, published, in good standing). `destructive` is wired to `flag`, so a
 destructive button lands on the right colour by construction.
 
-**Type** does three jobs and no more. Archivo, run wide and heavy, is the
-masthead and the page title — the lettering of a form header or a drawer label.
-Public Sans, drawn for US federal government forms, is interface text. Spline
-Sans Mono carries everything read off the screen and typed into another system:
-student numbers, payment references, amounts, dates.
+None of this forks a shadcn component. It is done in `globals.css`, by giving
+shadcn's own semantic tokens registry values:
 
-One typographic rule holds the rest together, and breaking it is what makes an
-interface shout: **small mono capitals label a column, and nothing else.** Not
-page eyebrows, not field labels, not row counts. A field label is sentence case
-and quiet, because a label's whole job is to get out of the way.
+| shadcn token | Registry value |
+| --- | --- |
+| `background` / `card` | the sheet |
+| `foreground` | ink |
+| `primary` | stamp blue |
+| `destructive` | flag |
+| `muted` | the band |
+| `border` / `input` | the two weights of ruling |
+| `radius` | effectively square |
+
+**Type** does three jobs. Archivo, run wide and heavy, is the masthead and the
+page title — the lettering of a form header. Public Sans, drawn for US federal
+government forms, is interface text. Spline Sans Mono carries anything read off
+the screen and typed into another system: student numbers, payment references,
+amounts, dates. One rule holds it together: **small mono capitals label a
+column, and nothing else** — not page eyebrows, not field labels, not row
+counts. A field label is sentence case and quiet, because a label's job is to
+get out of the way.
+
+**Orientation** is treated as a feature, not a nicety. The role selector sits
+above the navigation, because it decides what the navigation contains — in the
+footer, where it started, the one control that explains the whole screen was the
+last thing anybody found. Every nav entry carries its description, not just the
+active one. Detail screens open with a route back. And where the domain has a
+distinction a reader cannot guess — "owing" is not "in arrears" — the screen
+says so next to the figures rather than assuming it.
 
 Every table is **TanStack Table** driving the shadcn `Table` primitives — the
 shadcn data-table pattern. `src/components/data-table.tsx` is the shared shell
@@ -338,11 +344,15 @@ assisted with some boilerplate".
   the measurement, not the screenshot.
 - **The first design was, in the user's words, "AI slop" — and it was.** Cream
   background, high-contrast serif display, hairline rules, zero radius, dense
-  columns. That is two of the three looks current AI design converges on,
-  stacked. It was not a choice; it was a default I had arrived at without
-  noticing. The rebuild started from the subject instead — greenbar stationery,
-  ink column heads, an exception margin — and threw out the Spectral/IBM Plex
-  pairing, which is the other half of the same default.
+  columns: two of the three looks current AI design converges on, stacked. Not a
+  choice, a default I had arrived at without noticing.
+- **My first attempt to fix it was a repaint, and the user said so.** New palette,
+  new typefaces, same page architecture — so it still read as the same screen. The
+  second pass changed the structure: cards became ruled sections of one sheet, the
+  role selector moved above the navigation it governs, coloured margin marks became
+  a named Attention column, and every black fill came out. Worth recording because
+  the failure mode is specific: I had treated "make it look different" as the task
+  when the task was "make it read better".
 - **The interesting product decisions were mine.** Deriving the balance rather
   than storing it; separating "owing" from "in arrears"; re-marking
   un-publishing; showing students "not yet released" instead of nothing;

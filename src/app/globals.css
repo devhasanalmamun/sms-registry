@@ -9,78 +9,84 @@
  *
  * The material is continuous stationery: the banded "greenbar" paper university
  * registries printed marksheets and fee ledgers onto, and the ruled official
- * forms that go with it. That is where every decision here comes from.
+ * forms that go with it.
  *
- *   · The pale green band is not decoration. It is why the eye can hold its
- *     place across a fee row eight columns wide, which is the hardest thing to
- *     do on this screen.
- *   · Column headings sit in a solid ink bar, the way a printed register's do.
- *   · Every table opens with a narrow ruled margin, blank on most rows. A mark
- *     appears there only when the row wants something from you — so the margin
- *     is the whole triage layer, and a register in good order reads as empty.
+ * The page is one sheet. Sections are divided by rules and headings rather than
+ * stacked into boxes, because a screen of boxes-within-boxes makes a reader work
+ * out the nesting before they can read anything. Nothing is filled with black:
+ * weight comes from rules and from one house colour.
  *
  * The components under src/components/ui are shadcn/ui, unmodified. All of the
  * above is done by giving shadcn's semantic tokens registry values:
  *
- *   background  ground       border   ruling
+ *   background  paper        border   ruling
  *   foreground  ink          input    hard ruling
- *   primary     ink          muted    the band
- *   destructive flag         radius   0 — printed forms are not rounded
+ *   primary     stamp blue   muted    the band
+ *   destructive flag         radius   effectively square
  */
 
 :root {
-  --radius: 0rem;
+  --radius: 0.125rem;
 
-  /* The sheet, and the desk it sits on. */
-  --paper: #ffffff;
-  --ground: #f2f5ef;
-  --band: #e7ede2;
+  /* One continuous sheet. Sections are divided by rules, not by boxes. */
+  --paper: #fcfdfb;
+  --band: #eaf0e6;
+  --band-deep: #dde6d8;
 
-  --ink: #14161a;
-  --graphite: #565c63;
-  --dim: #878e93;
+  --ink: #1e2328;
+  --graphite: #4f565d;
+  --dim: #7c848b;
 
-  --rule: #d6dbd1;
-  --rule-hard: #b6bdb0;
+  --rule: #d8ded3;
+  --rule-hard: #b3bbad;
 
   /*
-   * Three signals, and they are the only colours in the interface.
+   * The house colour: the blue of an official stamp. It marks the primary
+   * action on a screen and the section you are in, and it does nothing else,
+   * so "blue means you can act on it" stays true everywhere.
+   */
+  --stamp: #1f4b7f;
+  --stamp-deep: #17395f;
+  --stamp-tint: #e6edf5;
+
+  /*
+   * Three signals, and they are the only other colours in the interface.
    *   flag   money past its due date, a mark withheld — act on this
    *   watch  late work, a deadline closing — know about this
    *   clear  settled, published, in good standing
    */
-  --flag: #a8321f;
-  --flag-tint: #f8e8e4;
-  --watch: #8a5a0b;
-  --watch-tint: #f8efdc;
-  --clear: #2e6042;
-  --clear-tint: #e3ece2;
+  --flag: #a3301e;
+  --flag-tint: #f9e9e5;
+  --watch: #855709;
+  --watch-tint: #f9f0dd;
+  --clear: #2c5c40;
+  --clear-tint: #e4ede3;
 
-  --background: var(--ground);
+  --background: var(--paper);
   --foreground: var(--ink);
 
   --card: var(--paper);
   --card-foreground: var(--ink);
-  --popover: var(--paper);
+  --popover: #ffffff;
   --popover-foreground: var(--ink);
 
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
+  --primary: var(--stamp);
+  --primary-foreground: #ffffff;
   --secondary: var(--band);
   --secondary-foreground: var(--ink);
 
   --muted: var(--band);
   --muted-foreground: var(--dim);
-  --accent: var(--band);
-  --accent-foreground: var(--ink);
+  --accent: var(--stamp-tint);
+  --accent-foreground: var(--stamp-deep);
 
   --destructive: var(--flag);
 
   --border: var(--rule);
   --input: var(--rule-hard);
-  --ring: var(--ink);
+  --ring: var(--stamp);
 
-  --chart-1: var(--ink);
+  --chart-1: var(--stamp);
   --chart-2: var(--graphite);
   --chart-3: var(--dim);
   --chart-4: var(--watch);
@@ -88,12 +94,12 @@
 
   --sidebar: var(--band);
   --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: var(--paper);
+  --sidebar-primary: var(--stamp);
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--paper);
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--rule-hard);
-  --sidebar-ring: var(--ink);
+  --sidebar-ring: var(--stamp);
 }
 
 /*
@@ -103,8 +109,8 @@
  */
 .dark {
   --paper: #191c1f;
-  --ground: #101215;
-  --band: #1f2429;
+  --band: #222831;
+  --band-deep: #2a313a;
 
   --ink: #e8ebe6;
   --graphite: #a8afb4;
@@ -120,32 +126,35 @@
   --clear: #7fb894;
   --clear-tint: #1b2620;
 
-  --background: var(--ground);
+  --background: var(--paper);
   --foreground: var(--ink);
   --card: var(--paper);
   --card-foreground: var(--ink);
   --popover: var(--paper);
   --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--ground);
+  --stamp: #6fa3dc;
+  --stamp-deep: #8ab8e8;
+  --stamp-tint: #1b2b3c;
+  --primary: var(--stamp);
+  --primary-foreground: #0f1418;
   --secondary: var(--band);
   --secondary-foreground: var(--ink);
   --muted: var(--band);
   --muted-foreground: var(--dim);
-  --accent: var(--band);
-  --accent-foreground: var(--ink);
+  --accent: var(--stamp-tint);
+  --accent-foreground: var(--stamp);
   --destructive: var(--flag);
   --border: var(--rule);
   --input: var(--rule-hard);
-  --ring: var(--dim);
+  --ring: var(--stamp);
   --sidebar: var(--band);
   --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: var(--ground);
+  --sidebar-primary: var(--stamp);
+  --sidebar-primary-foreground: #0f1418;
   --sidebar-accent: var(--paper);
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--rule-hard);
-  --sidebar-ring: var(--dim);
+  --sidebar-ring: var(--stamp);
 }
 
 @theme inline {
@@ -184,6 +193,10 @@
   --color-ink: var(--ink);
   --color-paper: var(--paper);
   --color-band: var(--band);
+  --color-band-deep: var(--band-deep);
+  --color-stamp: var(--stamp);
+  --color-stamp-deep: var(--stamp-deep);
+  --color-stamp-tint: var(--stamp-tint);
   --color-dim: var(--dim);
   --color-graphite: var(--graphite);
   --color-rule-hard: var(--rule-hard);
@@ -249,10 +262,10 @@
    */
   .masthead {
     font-family: var(--font-display);
-    font-variation-settings: "wdth" 118;
+    font-variation-settings: "wdth" 114;
     font-weight: 700;
     letter-spacing: -0.015em;
-    line-height: 0.95;
+    line-height: 1;
   }
 
   /*
@@ -263,20 +276,8 @@
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     font-weight: 500;
-    letter-spacing: 0.09em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  /*
-   * A mark in the margin. Registrars annotate the left edge of a printed
-   * register; this is that, as a solid block, so a row wanting attention is
-   * findable at arm's length without reading a word of it.
-   */
-  .margin-mark {
-    display: block;
-    width: 0.1875rem;
-    height: 1.125rem;
-    background: currentColor;
   }
 }
 

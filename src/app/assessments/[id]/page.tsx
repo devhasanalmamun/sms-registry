@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { staffOnly } from "@/lib/guards";
 import { getAssessmentDetail } from "@/server/queries";
@@ -61,20 +60,13 @@ export default async function AssessmentPage({
   return (
     <>
       <PageHeader
+        trail={{ href: "/assessments", label: "All assessments" }}
         reference={assessment.module}
         title={assessment.title}
         lede={
           closed
             ? `Deadline passed ${relativeToNow(assessment.dueAt)} (${formatDateTime(assessment.dueAt)}). Resubmission is closed; late work is still accepted and flagged.`
             : `Open until ${formatDateTime(assessment.dueAt)} — ${relativeToNow(assessment.dueAt)}. Students may resubmit until then.`
-        }
-        action={
-          <Link
-            href="/assessments"
-            className="text-sm text-foreground underline underline-offset-4"
-          >
-            All assessments
-          </Link>
         }
       />
 

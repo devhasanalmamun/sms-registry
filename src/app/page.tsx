@@ -48,7 +48,7 @@ export default async function DashboardPage() {
       <PageHeader
         reference={today}
         title="Today"
-        lede="Everything on this page is something a person has to do. Counts and totals live below it."
+        lede="The Registry desk. Everything on this page is something somebody has to act on — fees to chase, scripts to mark, results to release. Counts and totals sit at the bottom, because nobody starts their day with a total."
       />
 
       {nothingToDo ? (

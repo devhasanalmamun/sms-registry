@@ -32,11 +32,13 @@ function SwitchButton() {
 }
 
 /**
- * The role toggle, at the foot of the index margin.
+ * Who you are reading the register as.
  *
- * It stands in for signing in, so it says who you are reading the register as —
- * and, in one line, what that costs you: a student's view genuinely does not
- * fetch a withheld mark.
+ * This stands in for signing in, and it sits above the navigation because it
+ * decides what the navigation contains. The line underneath says what the
+ * choice actually does, because "role toggle" in a demo usually means the same
+ * page with things hidden, and here it does not: a student's view never fetches
+ * a withheld mark in the first place.
  */
 export function RoleSwitcher({
   value,
@@ -50,10 +52,10 @@ export function RoleSwitcher({
   return (
     <form
       action={switchRole}
-      className="border-t border-rule-hard bg-card px-4 py-3.5"
+      className="border-b border-rule-hard bg-card px-4 py-3.5"
     >
-      <Label htmlFor="role" className="colhead text-dim">
-        Viewing as
+      <Label htmlFor="role" className="text-xs font-semibold text-graphite">
+        You are viewing this as
       </Label>
 
       <Select name="role" defaultValue={value}>

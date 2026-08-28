@@ -103,7 +103,7 @@ export function StudentResultsTable({ rows }: { rows: StudentResultRow[] }) {
       columns={columns}
       data={rows}
       mark={(r) =>
-        r.published ? null : { tone: "flag", label: "Not released to the student" }
+        r.published ? null : { tone: "flag", label: "Withheld" }
       }
       caption="Marks"
     />

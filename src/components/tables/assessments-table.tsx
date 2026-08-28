@@ -121,9 +121,9 @@ export function AssessmentsTable({ rows }: { rows: AssessmentRow[] }) {
       data={rows}
       mark={(r) =>
         r.withheld > 0
-          ? { tone: "flag", label: "Results withheld" }
+          ? { tone: "flag", label: "Withheld" }
           : r.awaitingMark > 0
-            ? { tone: "watch", label: "Awaiting a mark" }
+            ? { tone: "watch", label: "Unmarked" }
             : null
       }
       caption="Assessments"
