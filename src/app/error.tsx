@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Panel } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Panel } from "@/components/registry";
 
 /**
  * Errors explain what happened and what to do about it. They do not apologise,
@@ -24,12 +25,12 @@ export default function ErrorBoundary({
         <code className="mx-1 font-mono text-xs">DATABASE_URL</code> is correct.
       </p>
       {error.digest ? (
-        <p className="mt-4 font-mono text-xs text-ink-faint">
+        <p className="mt-4 font-mono text-xs text-muted-foreground">
           Reference: {error.digest}
         </p>
       ) : null}
       <div className="mt-6 flex justify-center">
-        <Button variant="primary" onClick={reset}>
+        <Button variant="default" onClick={reset}>
           Try again
         </Button>
       </div>

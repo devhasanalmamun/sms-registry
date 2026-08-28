@@ -1,4 +1,4 @@
-import { LinkButton, Panel } from "@/components/ui";
+import { LinkButton, Panel } from "@/components/registry";
 
 export default function NotFound() {
   return (
@@ -10,10 +10,12 @@ export default function NotFound() {
         been removed since the link was made.
       </p>
       <div className="mt-6 flex justify-center gap-2">
-        <LinkButton variant="primary" href="/">
+        <LinkButton variant="default" href="/">
           Back to Today
         </LinkButton>
-        <LinkButton href="/students">Search the register</LinkButton>
+        <LinkButton href="/students" variant="outline">
+          Search the register
+        </LinkButton>
       </div>
     </Panel>
   );

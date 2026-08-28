@@ -1,14 +1,8 @@
 import { studentOnly } from "@/lib/guards";
 import { getStudentAssessments } from "@/server/queries";
 import { SubmissionUpload } from "@/components/submission-upload";
-import {
-  EmptyState,
-  Notice,
-  PageHeader,
-  Panel,
-  Stamp,
-} from "@/components/ui";
 import { formatBytes, formatDateTime, relativeToNow } from "@/lib/format";
+import { EmptyState, Notice, PageHeader, Panel, Stamp } from "@/components/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -53,12 +47,12 @@ export default async function MyAssessmentsPage() {
           {rows.map(({ assessment, closed, submission, releasedScore }) => {
             return (
               <Panel key={assessment.id}>
-                <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-rule px-4 py-3">
+                <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-border px-4 py-3">
                   <div>
                     <h2 className="font-display text-lg leading-tight">
                       {assessment.title}
                     </h2>
-                    <p className="mt-0.5 text-xs text-ink-faint">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {assessment.module}
                     </p>
                   </div>
@@ -67,7 +61,7 @@ export default async function MyAssessmentsPage() {
                       {formatDateTime(assessment.dueAt)}
                     </p>
                     <p
-                      className={`text-xs ${closed ? "text-ink-faint" : "text-amber"}`}
+                      className={`text-xs ${closed ? "text-muted-foreground" : "text-amber"}`}
                     >
                       {closed
                         ? `deadline passed ${relativeToNow(assessment.dueAt)}`
@@ -78,15 +72,15 @@ export default async function MyAssessmentsPage() {
 
                 <div className="space-y-4 px-4 py-4">
                   {submission ? (
-                    <div className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-paper px-3 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-background px-3 py-2.5">
                       <div className="min-w-0">
                         <a
                           href={`/api/submissions/${submission.id}/file`}
-                          className="text-sm underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
+                          className="text-sm underline decoration-input underline-offset-4 hover:decoration-foreground"
                         >
                           {submission.originalName}
                         </a>
-                        <p className="mt-0.5 text-xs text-ink-faint">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           {formatDateTime(submission.submittedAt)} ·{" "}
                           {formatBytes(submission.sizeBytes)}
                           {submission.attempt > 1

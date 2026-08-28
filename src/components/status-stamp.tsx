@@ -1,5 +1,5 @@
 import type { EnrolmentStatus } from "@/generated/prisma/enums";
-import { Stamp } from "@/components/ui";
+import { Stamp } from "@/components/registry";
 
 /**
  * Enrolment status, stamped.

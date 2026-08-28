@@ -1,17 +1,8 @@
 import { studentOnly } from "@/lib/guards";
 import { getStudentDetail } from "@/server/queries";
-import {
-  Code,
-  Figure,
-  Notice,
-  PageHeader,
-  Panel,
-  PanelHeader,
-  Table,
-  Td,
-  Th,
-} from "@/components/ui";
 import { formatDate, formatMoney } from "@/lib/format";
+import { Figure, Notice, PageHeader, Panel, PanelHeader } from "@/components/registry";
+import { ChargesTable, PaymentsTable } from "@/components/tables/ledger-tables";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +19,24 @@ export default async function MyFeesPage() {
   if (!detail) return null;
 
   const { fees } = detail;
+
+  const chargeRows = detail.charges.map((c) => ({
+    id: c.id,
+    description: c.description,
+    due: formatDate(c.dueDate),
+    dueMs: c.dueDate.getTime(),
+    amount: Number(c.amount.toFixed(2)),
+    pastDue: c.pastDue,
+  }));
+
+  const paymentRows = detail.payments.map((p) => ({
+    id: p.id,
+    reference: p.reference,
+    detail: p.method,
+    received: formatDate(p.paidAt),
+    receivedMs: p.paidAt.getTime(),
+    amount: Number(p.amount.toFixed(2)),
+  }));
 
   return (
     <>
@@ -61,7 +70,7 @@ export default async function MyFeesPage() {
       </div>
 
       <Panel className="mb-6">
-        <div className="grid grid-cols-3 divide-x divide-rule">
+        <div className="grid grid-cols-3 divide-x divide-border">
           <Figure value={formatMoney(fees.charged.toFixed(2))} label="Charged" />
           <Figure value={formatMoney(fees.paid.toFixed(2))} label="Paid" tone="sage" />
           <Figure
@@ -80,67 +89,22 @@ export default async function MyFeesPage() {
         <Panel>
           <PanelHeader title="What you have been charged" />
           {detail.charges.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               Nothing has been charged to your account.
             </p>
           ) : (
-            <Table className="min-w-0">
-              <thead>
-                <tr>
-                  <Th>Item</Th>
-                  <Th>Due by</Th>
-                  <Th numeric>Amount</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.charges.map((charge) => (
-                  <tr key={charge.id}>
-                    <Td>{charge.description}</Td>
-                    <Td className="font-mono text-xs text-ink-soft">
-                      {formatDate(charge.dueDate)}
-                    </Td>
-                    <Td numeric>{formatMoney(charge.amount.toFixed(2))}</Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+            <ChargesTable rows={chargeRows} />
           )}
         </Panel>
 
         <Panel>
           <PanelHeader title="What you have paid" hint="Keep the reference for your records." />
           {detail.payments.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               No payment has been received yet.
             </p>
           ) : (
-            <Table className="min-w-0">
-              <thead>
-                <tr>
-                  <Th>Reference</Th>
-                  <Th>Date</Th>
-                  <Th numeric>Amount</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.payments.map((payment) => (
-                  <tr key={payment.id}>
-                    <Td>
-                      <Code>{payment.reference}</Code>
-                      <span className="block text-xs text-ink-faint">
-                        {payment.method}
-                      </span>
-                    </Td>
-                    <Td className="font-mono text-xs text-ink-soft">
-                      {formatDate(payment.paidAt)}
-                    </Td>
-                    <Td numeric className="text-sage">
-                      {formatMoney(payment.amount.toFixed(2))}
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+            <PaymentsTable rows={paymentRows} />
           )}
         </Panel>
       </div>

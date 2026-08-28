@@ -2,16 +2,10 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  Button,
-  Field,
-  Input,
-  Notice,
-  Panel,
-  PanelHeader,
-} from "@/components/ui";
-import { SelectField } from "@/components/select";
 import { IDLE, type ActionState } from "@/server/action-state";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, Notice, Panel, PanelHeader, SelectField } from "@/components/registry";
 
 type Programme = { id: string; code: string; name: string; feeAmount: string };
 
@@ -28,7 +22,7 @@ type StudentDefaults = {
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" disabled={pending}>
+    <Button type="submit" variant="default" disabled={pending}>
       {pending ? "Saving…" : label}
     </Button>
   );
@@ -78,7 +72,7 @@ export function StudentForm({
             id="fullName"
             name="fullName"
             defaultValue={defaults.fullName}
-            invalid={Boolean(errors.fullName)}
+            aria-invalid={Boolean(errors.fullName)}
             autoComplete="off"
             required
           />
@@ -95,7 +89,7 @@ export function StudentForm({
             name="email"
             type="email"
             defaultValue={defaults.email}
-            invalid={Boolean(errors.email)}
+            aria-invalid={Boolean(errors.email)}
             autoComplete="off"
             required
           />
@@ -107,7 +101,7 @@ export function StudentForm({
             name="dateOfBirth"
             type="date"
             defaultValue={defaults.dateOfBirth}
-            invalid={Boolean(errors.dateOfBirth)}
+            aria-invalid={Boolean(errors.dateOfBirth)}
             required
           />
         </Field>
@@ -145,7 +139,7 @@ export function StudentForm({
             min={1}
             max={7}
             defaultValue={defaults.academicYear ?? 1}
-            invalid={Boolean(errors.academicYear)}
+            aria-invalid={Boolean(errors.academicYear)}
             required
           />
         </Field>
@@ -173,7 +167,7 @@ export function StudentForm({
         <div className="flex items-center gap-3 sm:col-span-2">
           <SubmitButton label={submitLabel} />
           {defaults.id ? null : (
-            <p className="text-xs text-ink-faint">
+            <p className="text-xs text-muted-foreground">
               A student ID is allocated automatically, continuing this year&rsquo;s
               sequence.
             </p>

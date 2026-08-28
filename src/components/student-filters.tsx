@@ -1,7 +1,10 @@
 "use client";
 
-import { Button, Field, Input, LinkButton } from "@/components/ui";
-import { SelectField, type Option } from "@/components/select";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Field, LinkButton, type Option, SelectField } from "@/components/registry";
 
 /**
  * The register's filter bar.
@@ -60,7 +63,7 @@ export function StudentFilters({
       </Field>
 
       <div className="flex items-end gap-2">
-        <Button type="submit" variant="primary">
+        <Button type="submit" variant="default">
           Apply
         </Button>
         {filtered ? (
@@ -70,19 +73,13 @@ export function StudentFilters({
         ) : null}
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-ink-soft sm:col-span-2 lg:col-span-4">
-        <input
-          type="checkbox"
-          name="arrears"
-          value="1"
-          defaultChecked={overdueOnly}
-          className="size-4 accent-[#7a2e2e]"
-        />
+      <Label className="gap-2 text-sm font-normal text-ink-soft sm:col-span-2 lg:col-span-4">
+        <Checkbox name="arrears" value="1" defaultChecked={overdueOnly} />
         Only students in arrears
-        <span className="text-xs text-ink-faint">
+        <span className="text-xs text-muted-foreground">
           (a charge past its due date, not simply a balance owing)
         </span>
-      </label>
+      </Label>
     </form>
   );
 }

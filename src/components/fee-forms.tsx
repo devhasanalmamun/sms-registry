@@ -2,15 +2,16 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button, Field, Input, Notice } from "@/components/ui";
-import { SelectField } from "@/components/select";
 import { IDLE } from "@/server/action-state";
 import { addCharge, recordPayment } from "@/server/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, Notice, SelectField } from "@/components/registry";
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" disabled={pending}>
+    <Button type="submit" variant="default" disabled={pending}>
       {pending ? "Saving…" : label}
     </Button>
   );
@@ -45,7 +46,7 @@ export function PaymentForm({ studentId }: { studentId: string }) {
           name="amount"
           inputMode="decimal"
           placeholder="1250.00"
-          invalid={Boolean(errors.amount)}
+          aria-invalid={Boolean(errors.amount)}
           required
         />
       </Field>
@@ -56,7 +57,7 @@ export function PaymentForm({ studentId }: { studentId: string }) {
           name="paidAt"
           type="date"
           defaultValue={today()}
-          invalid={Boolean(errors.paidAt)}
+          aria-invalid={Boolean(errors.paidAt)}
           required
         />
       </Field>
@@ -71,7 +72,7 @@ export function PaymentForm({ studentId }: { studentId: string }) {
           id="reference"
           name="reference"
           placeholder="BACS-2026-000512"
-          invalid={Boolean(errors.reference)}
+          aria-invalid={Boolean(errors.reference)}
           required
         />
       </Field>
@@ -131,7 +132,7 @@ export function ChargeForm({ studentId }: { studentId: string }) {
           id="description"
           name="description"
           placeholder="Resit administration fee"
-          invalid={Boolean(errors.description)}
+          aria-invalid={Boolean(errors.description)}
           required
         />
       </Field>
@@ -142,7 +143,7 @@ export function ChargeForm({ studentId }: { studentId: string }) {
           name="amount"
           inputMode="decimal"
           placeholder="75.00"
-          invalid={Boolean(errors.amount)}
+          aria-invalid={Boolean(errors.amount)}
           required
         />
       </Field>
@@ -158,7 +159,7 @@ export function ChargeForm({ studentId }: { studentId: string }) {
           name="dueDate"
           type="date"
           defaultValue={today()}
-          invalid={Boolean(errors.dueDate)}
+          aria-invalid={Boolean(errors.dueDate)}
           required
         />
       </Field>

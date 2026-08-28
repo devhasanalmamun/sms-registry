@@ -2,14 +2,16 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button, Field, Input, Notice } from "@/components/ui";
 import { IDLE } from "@/server/action-state";
 import { createAssessment } from "@/server/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, Notice } from "@/components/registry";
 
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" disabled={pending}>
+    <Button type="submit" variant="default" disabled={pending}>
       {pending ? "Creating…" : "Create assessment"}
     </Button>
   );
@@ -41,7 +43,7 @@ export function AssessmentForm() {
           id="title"
           name="title"
           placeholder="Coursework 2 — Database Design"
-          invalid={Boolean(errors.title)}
+          aria-invalid={Boolean(errors.title)}
           required
         />
       </Field>
@@ -51,7 +53,7 @@ export function AssessmentForm() {
           id="module"
           name="module"
           placeholder="CS210 Databases"
-          invalid={Boolean(errors.module)}
+          aria-invalid={Boolean(errors.module)}
           required
         />
       </Field>
@@ -68,7 +70,7 @@ export function AssessmentForm() {
           name="dueAt"
           type="datetime-local"
           defaultValue={defaultDeadline()}
-          invalid={Boolean(errors.dueAt)}
+          aria-invalid={Boolean(errors.dueAt)}
           required
         />
       </Field>

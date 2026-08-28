@@ -5,7 +5,7 @@ administrator uses every day — **enrolment**, **fees and payments**, **assessm
 submission**, and **marksheet and results** — plus the student's own view of the
 same data.
 
-Built with **Next.js (App Router)**, **PostgreSQL** and **Prisma**.
+Built with **Next.js (App Router)**, **PostgreSQL**, **Prisma**, **shadcn/ui** and **TanStack Table**.
 
 ---
 
@@ -30,7 +30,7 @@ is the only thing that has to change. If you would rather not install one, a
 `docker-compose.yml` is included purely as a convenience:
 
 ```bash
-npm run db:up               # docker compose up -d — postgres:16 on port 5433
+npm run db:up               # docker compose up -d — postgres:16 on port 5555
 ```
 
 The `.env.example` connection string already matches that container, so with
@@ -214,7 +214,9 @@ src/server/
   actions.ts             mutations, each re-checking role and input
 
 src/app/                 staff pages, /me/* student pages, two API routes
-src/components/          UI primitives and forms
+src/components/ui/       shadcn/ui, as generated — not hand-edited
+src/components/          the Registry layer composed on it, plus the forms
+src/components/tables/   one column definition per table, over TanStack
 ```
 
 The rules live in `src/lib` as plain functions with no database or React in
@@ -224,12 +226,41 @@ implementation of "is this late", not two that can drift apart.
 
 ### On the interface
 
+The component layer is **shadcn/ui**, installed with the CLI (`components.json`
+is committed). Everything under `src/components/ui` is exactly what the registry
+generated and is left alone so it can be updated or re-added; `src/components/
+registry.tsx` is the layer above it, where this domain's compositions live — a
+stamped status is a `Badge`, a ruled panel is a `Card`, a labelled control is a
+`Label` plus a `Field`.
+
+Nothing about the look is achieved by forking those components. It is done in
+`globals.css`, by giving shadcn's own semantic tokens institutional values:
+
+| shadcn token | Registry value |
+| --- | --- |
+| `background` / `foreground` | paper / ink |
+| `primary` | ink |
+| `destructive` | seal — the oxblood reserved for overdue money |
+| `border` / `input` | the two weights of ruling |
+| `radius` | `2px` — ruled boxes, not pills |
+
+`seal`, `amber` and `sage` keep their own names alongside those, because they
+carry meaning shadcn has no token for: money in arrears, work that is late, and
+anything settled or released. `destructive` is wired to `seal`, so a destructive
+button lands on the same colour by construction.
+
+Every table is **TanStack Table** driving the shadcn `Table` primitives — the
+shadcn data-table pattern. `src/components/data-table.tsx` is the shared shell
+and each file in `src/components/tables/` is one set of column definitions. The
+reason is not decoration: Registry staff re-sort constantly, and always by the
+column in front of them — who owes the most, what is due first, which scripts are
+still unmarked. Those lists are small enough to hold in the page, so sorting is
+client-side and the server query stays responsible for *which* rows are in the
+list. Sorting state is announced with `aria-sort`.
+
 It is styled as a records office rather than a SaaS dashboard: ink-on-paper,
 ruled tables with no zebra striping, and Spectral / IBM Plex Sans / IBM Plex Mono
-doing three distinct jobs. Controls are shadcn/ui-shaped — Radix primitives with
-this project's own tokens rather than shadcn's default palette — which is what
-`src/components/select.tsx` is: the same component structure shadcn ships, over
-`@radix-ui/react-select`. Anything a person reads off the screen and types into
+doing three distinct jobs. Anything a person reads off the screen and types into
 another system — student IDs, payment references, amounts, dates — is set in
 mono so the columns align and digits cannot be misread. Statuses are rendered as
 **stamps**, because a paper student file is stamped, and because it lets a dense
@@ -273,6 +304,17 @@ assisted with some boilerplate".
 - React 19's purity lint rejected `Date.now()` during render. The fix was right in
   substance as well as form: "is this charge overdue" is a question about the
   data, so it moved into the query layer.
+- **`@tanstack/react-table@latest` installed v9**, whose API is not the v8 the
+  shadcn data-table pattern is written against — `createCoreRowModel`, a
+  feature-typed `ColumnDef`, no `useReactTable`. The generated code was v8 and
+  did not compile. Same lesson as the Prisma skew, twice in one project: pin the
+  major, and check what actually got installed. Pinned to v8, which is what
+  shadcn documents.
+- **A visual bug I diagnosed that did not exist.** The rail's controls looked
+  light-on-dark in a screenshot, and I had a plausible story about Chromium
+  painting the native button face under `appearance: button`. Sampling the PNG
+  pixels showed `rgb(40,49,60)` — correct all along. I reverted the "fix". Read
+  the measurement, not the screenshot.
 - **The interesting product decisions were mine.** Deriving the balance rather
   than storing it; separating "owing" from "in arrears"; re-marking
   un-publishing; showing students "not yet released" instead of nothing;

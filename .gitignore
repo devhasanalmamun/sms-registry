@@ -43,6 +43,9 @@ next-env.d.ts
 # Prisma Client is generated at install time (see the postinstall script)
 /src/generated
 
+# Browser-check screenshots
+/.playwright-mcp
+
 # Uploaded submissions are user data, not source
 /uploads
 

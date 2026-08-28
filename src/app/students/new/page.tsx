@@ -2,7 +2,7 @@ import { staffOnly } from "@/lib/guards";
 import { listProgrammes } from "@/server/queries";
 import { enrolStudent } from "@/server/actions";
 import { StudentForm } from "@/components/student-form";
-import { EmptyState, PageHeader, Panel } from "@/components/ui";
+import { EmptyState, PageHeader, Panel } from "@/components/registry";
 
 export const dynamic = "force-dynamic";
 

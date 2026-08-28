@@ -2,22 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { staffOnly } from "@/lib/guards";
 import { getAssessmentDetail } from "@/server/queries";
-import { publishAllResults, setResultPublished } from "@/server/actions";
+import { publishAllResults } from "@/server/actions";
 import { averageScore } from "@/lib/grading";
-import {
-  Button,
-  Code,
-  Figure,
-  PageHeader,
-  Panel,
-  PanelHeader,
-  Stamp,
-  Table,
-  Td,
-  Th,
-} from "@/components/ui";
-import { MarksheetGradeCells } from "@/components/marksheet-row";
 import { formatBytes, formatDateTime, relativeToNow } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Figure, PageHeader, Panel, PanelHeader } from "@/components/registry";
+import { MarksheetTable } from "@/components/tables/marksheet-table";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +37,27 @@ export default async function AssessmentPage({
   const withheld = marked.filter((r) => !r.result?.published);
   const average = averageScore(marked.map((r) => r.result!.score));
 
+  const sheet = rows.map(({ student, submission, result }) => ({
+    studentId: student.id,
+    studentCode: student.studentId,
+    fullName: student.fullName,
+    programmeCode: student.programme.code,
+    submission: submission
+      ? {
+          id: submission.id,
+          originalName: submission.originalName,
+          submittedAt: formatDateTime(submission.submittedAt),
+          size: formatBytes(submission.sizeBytes),
+          attempt: submission.attempt,
+          isLate: submission.isLate,
+        }
+      : null,
+    resultId: result?.id ?? null,
+    score: result?.score ?? null,
+    feedback: result?.feedback ?? null,
+    published: result?.published ?? false,
+  }));
+
   return (
     <>
       <PageHeader
@@ -60,7 +71,7 @@ export default async function AssessmentPage({
         action={
           <Link
             href="/assessments"
-            className="text-sm text-ink underline underline-offset-4"
+            className="text-sm text-foreground underline underline-offset-4"
           >
             All assessments
           </Link>
@@ -68,7 +79,7 @@ export default async function AssessmentPage({
       />
 
       <Panel className="mb-6">
-        <div className="grid grid-cols-2 divide-x divide-y divide-rule sm:grid-cols-5">
+        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-5">
           <Figure
             value={`${submitted.length}/${rows.length}`}
             label="Submitted"
@@ -96,107 +107,14 @@ export default async function AssessmentPage({
             withheld.length > 0 ? (
               <form action={publishAllResults}>
                 <input type="hidden" name="assessmentId" value={assessment.id} />
-                <Button type="submit" variant="primary" size="sm">
+                <Button type="submit" variant="default" size="sm">
                   Publish all {withheld.length} withheld
                 </Button>
               </form>
             ) : null
           }
         />
-        <Table className="min-w-[64rem]">
-          <thead>
-            <tr>
-              <Th>Student</Th>
-              <Th>Submission</Th>
-              <Th>Mark and feedback</Th>
-              <Th>Classification</Th>
-              <Th>Released</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ student, submission, result }) => (
-              <tr key={student.id} className="align-top hover:bg-paper">
-                <Td>
-                  <Link
-                    href={`/students/${student.id}`}
-                    className="font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
-                  >
-                    {student.fullName}
-                  </Link>
-                  <span className="mt-0.5 block">
-                    <Code>{student.studentId}</Code>
-                    <span className="ml-2 text-xs text-ink-faint">
-                      {student.programme.code}
-                    </span>
-                  </span>
-                </Td>
-
-                <Td>
-                  {submission ? (
-                    <>
-                      <a
-                        href={`/api/submissions/${submission.id}/file`}
-                        className="text-sm underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
-                      >
-                        {submission.originalName}
-                      </a>
-                      <span className="mt-0.5 block text-xs text-ink-faint">
-                        {formatDateTime(submission.submittedAt)} ·{" "}
-                        {formatBytes(submission.sizeBytes)}
-                        {submission.attempt > 1
-                          ? ` · attempt ${submission.attempt}`
-                          : ""}
-                      </span>
-                      {submission.isLate ? (
-                        <Stamp tone="amber" className="mt-1">
-                          Late
-                        </Stamp>
-                      ) : null}
-                    </>
-                  ) : (
-                    <Stamp tone="quiet">No submission</Stamp>
-                  )}
-                </Td>
-
-                <MarksheetGradeCells
-                  assessmentId={assessment.id}
-                  studentId={student.id}
-                  score={result?.score ?? null}
-                  feedback={result?.feedback ?? null}
-                  hasSubmission={Boolean(submission)}
-                />
-
-                <Td>
-                  {!result ? (
-                    <span className="text-xs text-ink-faint">Not marked</span>
-                  ) : (
-                    <form action={setResultPublished} className="space-y-1.5">
-                      <input type="hidden" name="resultId" value={result.id} />
-                      <input
-                        type="hidden"
-                        name="publish"
-                        value={String(!result.published)}
-                      />
-                      {result.published ? (
-                        <Stamp tone="sage">Published</Stamp>
-                      ) : (
-                        <Stamp tone="seal">Withheld</Stamp>
-                      )}
-                      <Button
-                        type="submit"
-                        size="sm"
-                        variant={result.published ? "danger" : "primary"}
-                        className="block w-full"
-                      >
-                        {result.published ? "Withhold" : "Publish"}
-                      </Button>
-                    </form>
-                  )}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <MarksheetTable assessmentId={assessment.id} rows={sheet} />
       </Panel>
     </>
   );

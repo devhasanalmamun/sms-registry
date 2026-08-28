@@ -40,10 +40,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col bg-ink text-paper lg:min-h-screen lg:w-64">
-        <div className="border-b border-white/10 px-5 py-5">
+      <aside className="flex shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:min-h-screen lg:w-64">
+        <div className="border-b border-sidebar-border px-5 py-5">
           <Link href={session.role === "staff" ? "/" : "/me"} className="block">
-            <p className="font-mono text-[0.625rem] uppercase tracking-[0.22em] text-white/45">
+            <p className="font-mono text-[0.625rem] uppercase tracking-[0.22em] text-sidebar-foreground/45">
               Student Management
             </p>
             <p className="mt-1 font-display text-2xl leading-none tracking-tight">

@@ -1,19 +1,10 @@
 import Link from "next/link";
 import { staffOnly } from "@/lib/guards";
 import { getRegistryOverview } from "@/server/queries";
-import {
-  Code,
-  Figure,
-  PageHeader,
-  Panel,
-  PanelHeader,
-  Stamp,
-  Table,
-  Td,
-  Th,
-} from "@/components/ui";
 import { formatDate, formatMoney, relativeToNow } from "@/lib/format";
 import { sumDecimals } from "@/lib/money";
+import { Figure, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
+import { ArrearsTable } from "@/components/tables/arrears-table";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +31,16 @@ export default async function DashboardPage() {
     overview.unpublished.length === 0 &&
     overview.lateSubmissions.length === 0;
 
+  const arrearsRows = overview.overdue.map((s) => ({
+    id: s.id,
+    studentId: s.studentId,
+    fullName: s.fullName,
+    programmeCode: s.programme.code,
+    status: s.status,
+    overdueAmount: Number(s.fees.overdueAmount.toFixed(2)),
+    balance: Number(s.fees.balance.toFixed(2)),
+  }));
+
   return (
     <>
       <PageHeader
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
       {nothingToDo ? (
         <Panel className="mb-6 px-4 py-8 text-center">
           <p className="font-display text-lg">Nothing outstanding.</p>
-          <p className="mt-1 text-sm text-ink-faint">
+          <p className="mt-1 text-sm text-muted-foreground">
             No arrears, no unmarked scripts, no withheld results.
           </p>
         </Panel>
@@ -70,60 +71,19 @@ export default async function DashboardPage() {
             action={
               <Link
                 href="/fees?filter=overdue"
-                className="text-sm text-ink underline underline-offset-4 hover:text-seal"
+                className="text-sm text-foreground underline underline-offset-4 hover:text-seal"
               >
                 Open the fees ledger
               </Link>
             }
           />
           {overview.overdue.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               No account is past its due date. Students with a future instalment
               still owe money — that is not arrears, and nobody needs to chase it.
             </p>
           ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Student</Th>
-                  <Th>Programme</Th>
-                  <Th>Standing</Th>
-                  <Th numeric>Overdue</Th>
-                  <Th numeric>Total balance</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview.overdue.map((s) => (
-                  <tr key={s.id}>
-                    <Td>
-                      <Link
-                        href={`/students/${s.id}`}
-                        className="font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
-                      >
-                        {s.fullName}
-                      </Link>
-                      <Code className="ml-2">{s.studentId}</Code>
-                    </Td>
-                    <Td className="text-ink-soft">{s.programme.code}</Td>
-                    <Td>
-                      {s.status === "WITHDRAWN" ? (
-                        <Stamp tone="neutral">Withdrawn</Stamp>
-                      ) : s.status === "DEFERRED" ? (
-                        <Stamp tone="neutral">Deferred</Stamp>
-                      ) : (
-                        <span className="text-ink-faint">—</span>
-                      )}
-                    </Td>
-                    <Td numeric className="font-medium text-seal">
-                      {formatMoney(s.fees.overdueAmount.toFixed(2))}
-                    </Td>
-                    <Td numeric className="text-ink-soft">
-                      {formatMoney(s.fees.balance.toFixed(2))}
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+            <ArrearsTable rows={arrearsRows} />
           )}
         </Panel>
 
@@ -134,16 +94,16 @@ export default async function DashboardPage() {
             hint="Submitted work with no grade entered."
           />
           {overview.awaitingMark.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               Every submission has been marked.
             </p>
           ) : (
-            <ul className="divide-y divide-rule">
+            <ul className="divide-y divide-border">
               {overview.awaitingMark.slice(0, 8).map(({ assessment, submission }) => (
                 <li key={submission.id} className="px-4 py-2.5">
                   <Link
                     href={`/assessments/${assessment.id}`}
-                    className="text-sm font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
+                    className="text-sm font-medium underline decoration-input underline-offset-4 hover:decoration-foreground"
                   >
                     {submission.student.fullName}
                   </Link>
@@ -152,13 +112,13 @@ export default async function DashboardPage() {
                       Late
                     </Stamp>
                   ) : null}
-                  <p className="mt-0.5 text-xs text-ink-faint">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {assessment.title} · submitted {formatDate(submission.submittedAt)}
                   </p>
                 </li>
               ))}
               {overview.awaitingMark.length > 8 ? (
-                <li className="px-4 py-2 text-xs text-ink-faint">
+                <li className="px-4 py-2 text-xs text-muted-foreground">
                   and {overview.awaitingMark.length - 8} more
                 </li>
               ) : null}
@@ -173,11 +133,11 @@ export default async function DashboardPage() {
             hint="Students cannot see these until someone publishes them."
           />
           {overview.unpublished.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               No results are being held back.
             </p>
           ) : (
-            <ul className="divide-y divide-rule">
+            <ul className="divide-y divide-border">
               {overview.unpublished.map((result) => (
                 <li
                   key={result.id}
@@ -186,11 +146,11 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <Link
                       href={`/assessments/${result.assessment.id}`}
-                      className="text-sm font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
+                      className="text-sm font-medium underline decoration-input underline-offset-4 hover:decoration-foreground"
                     >
                       {result.student.fullName}
                     </Link>
-                    <p className="mt-0.5 truncate text-xs text-ink-faint">
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {result.assessment.title} · marked {formatDate(result.markedAt)}
                     </p>
                   </div>
@@ -208,23 +168,23 @@ export default async function DashboardPage() {
             hint="Accepted, but flagged for the board."
           />
           {overview.lateSubmissions.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               Everything came in on time.
             </p>
           ) : (
-            <ul className="divide-y divide-rule">
+            <ul className="divide-y divide-border">
               {overview.lateSubmissions.map(({ assessment, submission }) => (
                 <li key={submission.id} className="px-4 py-2.5">
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/assessments/${assessment.id}`}
-                      className="text-sm font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
+                      className="text-sm font-medium underline decoration-input underline-offset-4 hover:decoration-foreground"
                     >
                       {submission.student.fullName}
                     </Link>
                     <Stamp tone="amber">Late</Stamp>
                   </div>
-                  <p className="mt-0.5 text-xs text-ink-faint">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {assessment.title} · deadline was {formatDate(assessment.dueAt)},
                     submitted {formatDate(submission.submittedAt)}
                   </p>
@@ -241,11 +201,11 @@ export default async function DashboardPage() {
             hint="Assessments closing in the next seven days."
           />
           {overview.closingSoon.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-faint">
+            <p className="px-4 py-6 text-sm text-muted-foreground">
               Nothing closes in the next seven days.
             </p>
           ) : (
-            <ul className="divide-y divide-rule">
+            <ul className="divide-y divide-border">
               {overview.closingSoon.map((assessment) => (
                 <li
                   key={assessment.id}
@@ -254,11 +214,11 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <Link
                       href={`/assessments/${assessment.id}`}
-                      className="text-sm font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
+                      className="text-sm font-medium underline decoration-input underline-offset-4 hover:decoration-foreground"
                     >
                       {assessment.title}
                     </Link>
-                    <p className="mt-0.5 truncate text-xs text-ink-faint">
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {assessment.module} · {assessment.submissions.length} in so far
                     </p>
                   </div>
@@ -275,7 +235,7 @@ export default async function DashboardPage() {
       {/* The footing: counts, kept subordinate to the work above. */}
       <Panel className="mt-6">
         <PanelHeader title="The register" hint="Headcount as it stands." />
-        <div className="grid grid-cols-2 divide-x divide-y divide-rule sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 lg:grid-cols-6">
           <Figure value={overview.counts.total} label="On the register" />
           <Figure value={overview.counts.enrolled} label="Enrolled" tone="sage" />
           <Figure value={overview.counts.deferred} label="Deferred" />

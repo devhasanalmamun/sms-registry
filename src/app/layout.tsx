@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Spectral, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
+import { cn } from "@/lib/utils";
 
 /*
  * Three faces, three jobs:
@@ -46,7 +47,12 @@ export default function RootLayout({
   return (
     <html
       lang="en-GB"
-      className={`${spectral.variable} ${plexSans.variable} ${plexMono.variable} h-full`}
+      className={cn(
+        "h-full font-sans",
+        spectral.variable,
+        plexSans.variable,
+        plexMono.variable,
+      )}
     >
       <body className="min-h-full">
         <AppShell>{children}</AppShell>

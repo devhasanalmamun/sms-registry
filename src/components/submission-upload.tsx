@@ -2,7 +2,8 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Notice } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/registry";
 
 type Outcome =
   | { kind: "idle" }
@@ -114,9 +115,9 @@ export function SubmissionUpload({
           name="file"
           accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           required
-          className="max-w-full text-sm file:mr-3 file:cursor-pointer file:border file:border-rule-strong file:bg-paper file:px-3 file:py-1.5 file:text-sm file:text-ink hover:file:border-ink"
+          className="max-w-full text-sm file:mr-3 file:cursor-pointer file:border file:border-input file:bg-background file:px-3 file:py-1.5 file:text-sm file:text-background hover:file:border-ink"
         />
-        <Button type="submit" variant="primary" disabled={busy || pending}>
+        <Button type="submit" variant="default" disabled={busy || pending}>
           {busy
             ? "Uploading…"
             : hasExisting
@@ -125,7 +126,7 @@ export function SubmissionUpload({
         </Button>
       </div>
 
-      <p className="text-xs text-ink-faint">
+      <p className="text-xs text-muted-foreground">
         PDF or DOCX, up to 10 MB.
         {hasExisting
           ? " Replacing keeps one submission on record — the new file supersedes the old one."

@@ -1,23 +1,10 @@
-import Link from "next/link";
 import { staffOnly } from "@/lib/guards";
 import { listStudents } from "@/server/queries";
-import {
-  Code,
-  EmptyState,
-  Figure,
-  LinkButton,
-  PageHeader,
-  Panel,
-  PanelHeader,
-  Stamp,
-  Table,
-  Td,
-  Th,
-} from "@/components/ui";
-import { StatusStamp } from "@/components/status-stamp";
 import { formatDate, formatMoney } from "@/lib/format";
 import { Prisma } from "@/generated/prisma/client";
 import { ZERO } from "@/lib/money";
+import { EmptyState, Figure, LinkButton, PageHeader, Panel, PanelHeader } from "@/components/registry";
+import { FeesTable } from "@/components/tables/fees-table";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +74,21 @@ export default async function FeesPage({
     { charged: ZERO, paid: ZERO, outstanding: ZERO, overdue: ZERO, credit: ZERO },
   );
 
+  const feeRows = rows.map((s) => ({
+    id: s.id,
+    studentId: s.studentId,
+    fullName: s.fullName,
+    programmeCode: s.programme.code,
+    status: s.status,
+    nextDue: s.fees.nextDueDate ? formatDate(s.fees.nextDueDate) : null,
+    charged: Number(s.fees.charged.toFixed(2)),
+    paid: Number(s.fees.paid.toFixed(2)),
+    balance: Number(s.fees.balance.toFixed(2)),
+    overdueAmount: Number(s.fees.overdueAmount.toFixed(2)),
+    isOverdue: s.fees.isOverdue,
+    inCredit: s.fees.inCredit,
+  }));
+
   const collected = totals.charged.greaterThan(0)
     ? totals.paid.dividedBy(totals.charged).times(100)
     : ZERO;
@@ -104,7 +106,7 @@ export default async function FeesPage({
           title="Position across the register"
           hint={`${collected.toFixed(1)}% of everything charged has been received.`}
         />
-        <div className="grid grid-cols-2 divide-x divide-y divide-rule sm:grid-cols-5">
+        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-5">
           <Figure value={formatMoney(totals.charged.toFixed(2))} label="Charged" />
           <Figure value={formatMoney(totals.paid.toFixed(2))} label="Received" tone="sage" />
           <Figure value={formatMoney(totals.outstanding.toFixed(2))} label="Outstanding" />
@@ -127,7 +129,7 @@ export default async function FeesPage({
             key={f.key}
             href={f.key === "all" ? "/fees" : `/fees?filter=${f.key}`}
             size="sm"
-            variant={filter === f.key ? "primary" : "secondary"}
+            variant={filter === f.key ? "default" : "outline"}
             title={f.hint}
           >
             {f.label}
@@ -144,73 +146,11 @@ export default async function FeesPage({
           </EmptyState>
         ) : (
           <>
-            <p className="border-b border-rule px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-ink-faint">
+            <p className="border-b border-border px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-muted-foreground">
               {rows.length} {rows.length === 1 ? "account" : "accounts"} ·{" "}
               {filters.find((f) => f.key === filter)?.hint}
             </p>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Student</Th>
-                  <Th>Standing</Th>
-                  <Th>Next due</Th>
-                  <Th numeric>Charged</Th>
-                  <Th numeric>Received</Th>
-                  <Th numeric>Balance</Th>
-                  <Th numeric>Overdue</Th>
-                  <Th />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s) => (
-                  <tr key={s.id} className="hover:bg-paper">
-                    <Td>
-                      <Link
-                        href={`/students/${s.id}`}
-                        className="font-medium underline decoration-rule-strong underline-offset-4 hover:decoration-ink"
-                      >
-                        {s.fullName}
-                      </Link>
-                      <Code className="ml-2">{s.studentId}</Code>
-                      <span className="block text-xs text-ink-faint">
-                        {s.programme.code}
-                      </span>
-                    </Td>
-                    <Td>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <StatusStamp status={s.status} />
-                        {s.fees.inCredit ? <Stamp tone="amber">Credit</Stamp> : null}
-                      </div>
-                    </Td>
-                    <Td className="font-mono text-xs text-ink-soft">
-                      {s.fees.nextDueDate ? formatDate(s.fees.nextDueDate) : "—"}
-                    </Td>
-                    <Td numeric className="text-ink-soft">
-                      {formatMoney(s.fees.charged.toFixed(2))}
-                    </Td>
-                    <Td numeric className="text-sage">
-                      {formatMoney(s.fees.paid.toFixed(2))}
-                    </Td>
-                    <Td numeric className={s.fees.inCredit ? "text-amber" : ""}>
-                      {formatMoney(s.fees.balance.toFixed(2))}
-                    </Td>
-                    <Td
-                      numeric
-                      className={s.fees.isOverdue ? "font-medium text-seal" : "text-ink-faint"}
-                    >
-                      {s.fees.isOverdue
-                        ? formatMoney(s.fees.overdueAmount.toFixed(2))
-                        : "—"}
-                    </Td>
-                    <Td className="text-right">
-                      <LinkButton href={`/students/${s.id}`} size="sm">
-                        Take payment
-                      </LinkButton>
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+            <FeesTable rows={feeRows} />
           </>
         )}
       </Panel>
