@@ -40,7 +40,14 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:min-h-screen lg:w-64">
+      {/*
+       * The rail stays put while the register scrolls: on a long list of
+       * students the navigation and the role toggle have to remain reachable
+       * without scrolling back to the top. Sticky rather than fixed, so it
+       * keeps its place in the flow and the main column needs no offset. Below
+       * `lg` it goes back to being an ordinary block at the top of the page.
+       */}
+      <aside className="flex shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:h-screen lg:w-64">
         <div className="border-b border-sidebar-border px-5 py-5">
           <Link href={session.role === "staff" ? "/" : "/me"} className="block">
             <p className="font-mono text-[0.625rem] uppercase tracking-[0.22em] text-sidebar-foreground/45">
@@ -52,7 +59,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
 
-        <nav className="flex-1 px-2 py-3">
+        {/* min-h-0 so this is what scrolls if the rail ever outgrows the
+            viewport — never the role toggle pinned below it. */}
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
           <ul className="space-y-0.5">
             {nav.map((item) => (
               <li key={item.href}>
