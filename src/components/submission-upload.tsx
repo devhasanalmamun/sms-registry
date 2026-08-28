@@ -94,18 +94,18 @@ export function SubmissionUpload({
       <input type="hidden" name="assessmentId" value={assessmentId} />
 
       {isLate ? (
-        <Notice tone="amber">
+        <Notice tone="watch">
           This deadline has passed. Your work will still be accepted, but it will
           be recorded as a late submission.
         </Notice>
       ) : null}
 
       {outcome.kind === "error" ? (
-        <Notice tone="seal">{outcome.message}</Notice>
+        <Notice tone="flag">{outcome.message}</Notice>
       ) : null}
 
       {outcome.kind === "done" ? (
-        <Notice tone={outcome.late ? "amber" : "sage"}>{outcome.message}</Notice>
+        <Notice tone={outcome.late ? "watch" : "clear"}>{outcome.message}</Notice>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">

@@ -24,7 +24,7 @@ function SwitchButton() {
       variant="outline"
       size="sm"
       disabled={pending}
-      className="mt-2 w-full border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      className="mt-2 w-full"
     >
       {pending ? "Switching…" : "Switch view"}
     </Button>
@@ -32,11 +32,11 @@ function SwitchButton() {
 }
 
 /**
- * The role toggle, on the ink rail.
+ * The role toggle, at the foot of the index margin.
  *
- * Inverted styling: the rail is dark, so the trigger borrows the sidebar tokens
- * while the menu itself stays on paper like every other dropdown — the menu is
- * a surface, and surfaces in this design are paper.
+ * It stands in for signing in, so it says who you are reading the register as —
+ * and, in one line, what that costs you: a student's view genuinely does not
+ * fetch a withheld mark.
  */
 export function RoleSwitcher({
   value,
@@ -50,23 +50,17 @@ export function RoleSwitcher({
   return (
     <form
       action={switchRole}
-      className="border-t border-sidebar-border px-5 py-4 text-sidebar-foreground"
+      className="border-t border-rule-hard bg-card px-4 py-3.5"
     >
-      <Label
-        htmlFor="role"
-        className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-sidebar-foreground/45"
-      >
+      <Label htmlFor="role" className="colhead text-dim">
         Viewing as
       </Label>
 
       <Select name="role" defaultValue={value}>
-        <SelectTrigger
-          id="role"
-          className="mt-1.5 w-full border-sidebar-border bg-sidebar-accent text-sidebar-foreground focus-visible:border-sidebar-ring focus-visible:ring-sidebar-ring/40 [&_svg]:text-sidebar-foreground/50"
-        >
+        <SelectTrigger id="role" className="mt-1.5 h-9 w-full bg-card">
           <SelectValue />
         </SelectTrigger>
-        {/* Wider than the rail: a name plus a student ID does not fit in 16rem. */}
+        {/* Wider than the margin: a name plus a student number does not fit in 15rem. */}
         <SelectContent
           position="popper"
           className="max-h-[60vh] w-auto min-w-(--radix-select-trigger-width)"
@@ -75,7 +69,7 @@ export function RoleSwitcher({
             <SelectItem value="staff">Registry staff</SelectItem>
           </SelectGroup>
           <SelectGroup>
-            <SelectLabel className="font-mono text-[0.625rem] uppercase tracking-[0.13em]">
+            <SelectLabel className="colhead text-dim">
               View as student
             </SelectLabel>
             {students.map((s) => (
@@ -96,7 +90,7 @@ export function RoleSwitcher({
 
       <SwitchButton />
 
-      <p className="mt-2.5 text-[0.6875rem] leading-snug text-sidebar-foreground/40">
+      <p className="mt-2.5 text-xs leading-snug text-muted-foreground">
         {actingFirstName
           ? `Seeing exactly what ${actingFirstName} sees. Withheld results are not fetched.`
           : "Full Registry access. Stands in for staff sign-in."}

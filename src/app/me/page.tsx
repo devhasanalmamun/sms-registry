@@ -2,7 +2,7 @@ import { studentOnly } from "@/lib/guards";
 import { getStudentAssessments, getStudentMarksheet } from "@/server/queries";
 import { averageScore } from "@/lib/grading";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { Figure, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
+import { Figure, Footing, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
 import { ReleasedResultsTable } from "@/components/tables/released-results-table";
 
 export const dynamic = "force-dynamic";
@@ -47,26 +47,22 @@ export default async function MarksheetPage() {
   return (
     <>
       <PageHeader
-        eyebrow={
-          <>
-            Marksheet · <span className="font-mono">{student.studentId}</span>
-          </>
-        }
+        reference={student.studentId}
         title={student.fullName}
         lede={`${student.programme.name} · Year ${student.academicYear}`}
       />
 
       {results.length > 0 ? (
         <Panel className="mb-6">
-          <div className="grid grid-cols-3 divide-x divide-border">
+          <Footing>
             <Figure value={results.length} label="Results released" />
             <Figure value={average ?? "—"} label="Mean mark" />
             <Figure
               value={`${passed}/${results.length}`}
               label="Passed"
-              tone={passed === results.length ? "sage" : "neutral"}
+              tone={passed === results.length ? "clear" : "neutral"}
             />
-          </div>
+          </Footing>
         </Panel>
       ) : null}
 
@@ -106,7 +102,7 @@ export default async function MarksheetPage() {
                   </p>
                 </div>
                 {/* The one place a stamp is allowed to sit askew. */}
-                <Stamp tone="seal" struck>
+                <Stamp tone="flag" struck>
                   Not released
                 </Stamp>
               </li>

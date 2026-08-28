@@ -73,7 +73,7 @@ export function StudentFilters({
         ) : null}
       </div>
 
-      <Label className="gap-2 text-sm font-normal text-ink-soft sm:col-span-2 lg:col-span-4">
+      <Label className="gap-2 text-sm font-normal text-graphite sm:col-span-2 lg:col-span-4">
         <Checkbox name="arrears" value="1" defaultChecked={overdueOnly} />
         Only students in arrears
         <span className="text-xs text-muted-foreground">

@@ -13,7 +13,6 @@ export default async function NewStudentPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Register · New record"
         title="Enrol a student"
         lede="Enrolling raises the programme's tuition charge at the same time, so the student appears in the fees ledger straight away."
       />

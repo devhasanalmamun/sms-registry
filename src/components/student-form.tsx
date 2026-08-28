@@ -58,7 +58,7 @@ export function StudentForm({
 
         {state.message ? (
           <div className="sm:col-span-2">
-            <Notice tone={state.ok ? "sage" : "seal"}>{state.message}</Notice>
+            <Notice tone={state.ok ? "clear" : "flag"}>{state.message}</Notice>
           </div>
         ) : null}
 

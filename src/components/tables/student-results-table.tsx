@@ -58,18 +58,18 @@ const columns: ColumnDef<StudentResultRow, unknown>[] = [
   {
     accessorKey: "band",
     header: "Classification",
-    meta: { cellClassName: "text-ink-soft" },
+    meta: { cellClassName: "text-graphite" },
   },
   {
     accessorKey: "published",
     header: "Released to student",
     cell: ({ row }) =>
       row.original.published ? (
-        <span className="text-sm text-sage">
+        <span className="text-sm text-clear">
           Published {row.original.publishedOn ?? ""}
         </span>
       ) : (
-        <Stamp tone="seal">Withheld</Stamp>
+        <Stamp tone="flag">Withheld</Stamp>
       ),
   },
   {
@@ -98,5 +98,14 @@ const columns: ColumnDef<StudentResultRow, unknown>[] = [
 ];
 
 export function StudentResultsTable({ rows }: { rows: StudentResultRow[] }) {
-  return <DataTable columns={columns} data={rows} caption="Marks" />;
+  return (
+    <DataTable
+      columns={columns}
+      data={rows}
+      mark={(r) =>
+        r.published ? null : { tone: "flag", label: "Not released to the student" }
+      }
+      caption="Marks"
+    />
+  );
 }

@@ -7,98 +7,145 @@
 /*
  * Registry — theme.
  *
- * The components under src/components/ui are shadcn/ui, unmodified. Everything
- * that makes this look like a records office rather than a generic dashboard is
- * done here, by giving shadcn's semantic tokens institutional values:
+ * The material is continuous stationery: the banded "greenbar" paper university
+ * registries printed marksheets and fee ledgers onto, and the ruled official
+ * forms that go with it. That is where every decision here comes from.
  *
- *   background  paper        border   ruling
- *   foreground  ink          input    strong ruling
- *   primary     ink          ring     ink
- *   destructive seal         radius   2px — ruled boxes, not pills
+ *   · The pale green band is not decoration. It is why the eye can hold its
+ *     place across a fee row eight columns wide, which is the hardest thing to
+ *     do on this screen.
+ *   · Column headings sit in a solid ink bar, the way a printed register's do.
+ *   · Every table opens with a narrow ruled margin, blank on most rows. A mark
+ *     appears there only when the row wants something from you — so the margin
+ *     is the whole triage layer, and a register in good order reads as empty.
  *
- * Two rules keep it disciplined:
+ * The components under src/components/ui are shadcn/ui, unmodified. All of the
+ * above is done by giving shadcn's semantic tokens registry values:
  *
- *   1. `seal` (oxblood) is reserved for money that is overdue. It is wired to
- *      shadcn's `destructive` so a destructive Button or Badge lands on it, and
- *      nothing else in the interface is allowed to use it — staff learn that the
- *      colour itself means "chase this".
- *   2. Anything a person reads off a screen and types into another system —
- *      student IDs, payment references, amounts, dates — is set in mono so the
- *      columns align and digits cannot be misread.
+ *   background  ground       border   ruling
+ *   foreground  ink          input    hard ruling
+ *   primary     ink          muted    the band
+ *   destructive flag         radius   0 — printed forms are not rounded
  */
 
 :root {
-  --radius: 0.125rem;
+  --radius: 0rem;
 
-  --background: #fbfaf7;
-  --foreground: #16202b;
+  /* The sheet, and the desk it sits on. */
+  --paper: #ffffff;
+  --ground: #f2f5ef;
+  --band: #e7ede2;
 
-  --card: #ffffff;
-  --card-foreground: #16202b;
-  --popover: #ffffff;
-  --popover-foreground: #16202b;
+  --ink: #14161a;
+  --graphite: #565c63;
+  --dim: #878e93;
 
-  --primary: #16202b;
-  --primary-foreground: #fbfaf7;
-  --secondary: #f1efe9;
-  --secondary-foreground: #16202b;
+  --rule: #d6dbd1;
+  --rule-hard: #b6bdb0;
 
-  --muted: #f1efe9;
-  --muted-foreground: #7b8894;
-  --accent: #f1efe9;
-  --accent-foreground: #16202b;
+  /*
+   * Three signals, and they are the only colours in the interface.
+   *   flag   money past its due date, a mark withheld — act on this
+   *   watch  late work, a deadline closing — know about this
+   *   clear  settled, published, in good standing
+   */
+  --flag: #a8321f;
+  --flag-tint: #f8e8e4;
+  --watch: #8a5a0b;
+  --watch-tint: #f8efdc;
+  --clear: #2e6042;
+  --clear-tint: #e3ece2;
 
-  --destructive: #7a2e2e;
+  --background: var(--ground);
+  --foreground: var(--ink);
 
-  --border: #e2ded5;
-  --input: #cdc7ba;
-  --ring: #16202b;
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
 
-  --chart-1: #16202b;
-  --chart-2: #3c4c5c;
-  --chart-3: #7b8894;
-  --chart-4: #9a6410;
-  --chart-5: #2f6b55;
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--band);
+  --secondary-foreground: var(--ink);
 
-  --sidebar: #16202b;
-  --sidebar-foreground: #fbfaf7;
-  --sidebar-primary: #fbfaf7;
-  --sidebar-primary-foreground: #16202b;
-  --sidebar-accent: rgb(255 255 255 / 8%);
-  --sidebar-accent-foreground: #fbfaf7;
-  --sidebar-border: rgb(255 255 255 / 12%);
-  --sidebar-ring: rgb(255 255 255 / 60%);
+  --muted: var(--band);
+  --muted-foreground: var(--dim);
+  --accent: var(--band);
+  --accent-foreground: var(--ink);
+
+  --destructive: var(--flag);
+
+  --border: var(--rule);
+  --input: var(--rule-hard);
+  --ring: var(--ink);
+
+  --chart-1: var(--ink);
+  --chart-2: var(--graphite);
+  --chart-3: var(--dim);
+  --chart-4: var(--watch);
+  --chart-5: var(--clear);
+
+  --sidebar: var(--band);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--paper);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule-hard);
+  --sidebar-ring: var(--ink);
 }
 
 /*
- * There is no theme switch in the Registry — a records office is ink on paper.
- * The dark palette exists so that a viewer whose browser or OS forces the
- * `.dark` class still gets a legible interface rather than white text on white.
+ * There is no theme switch in the Registry — stationery is not backlit. This
+ * exists so a viewer whose browser forces `.dark` still gets a legible
+ * interface rather than ink on ink.
  */
 .dark {
-  --background: #10171f;
-  --foreground: #eceae4;
+  --paper: #191c1f;
+  --ground: #101215;
+  --band: #1f2429;
 
-  --card: #16202b;
-  --card-foreground: #eceae4;
-  --popover: #16202b;
-  --popover-foreground: #eceae4;
+  --ink: #e8ebe6;
+  --graphite: #a8afb4;
+  --dim: #7d858b;
 
-  --primary: #eceae4;
-  --primary-foreground: #16202b;
-  --secondary: #1e2a36;
-  --secondary-foreground: #eceae4;
+  --rule: #2b3137;
+  --rule-hard: #3d454c;
 
-  --muted: #1e2a36;
-  --muted-foreground: #9aa6b2;
-  --accent: #1e2a36;
-  --accent-foreground: #eceae4;
+  --flag: #d98070;
+  --flag-tint: #2b1e1c;
+  --watch: #d3a555;
+  --watch-tint: #2a2419;
+  --clear: #7fb894;
+  --clear-tint: #1b2620;
 
-  --destructive: #c98a86;
-
-  --border: rgb(255 255 255 / 12%);
-  --input: rgb(255 255 255 / 18%);
-  --ring: #9aa6b2;
+  --background: var(--ground);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--ground);
+  --secondary: var(--band);
+  --secondary-foreground: var(--ink);
+  --muted: var(--band);
+  --muted-foreground: var(--dim);
+  --accent: var(--band);
+  --accent-foreground: var(--ink);
+  --destructive: var(--flag);
+  --border: var(--rule);
+  --input: var(--rule-hard);
+  --ring: var(--dim);
+  --sidebar: var(--band);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--ground);
+  --sidebar-accent: var(--paper);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule-hard);
+  --sidebar-ring: var(--dim);
 }
 
 @theme inline {
@@ -134,37 +181,33 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-band: var(--band);
+  --color-dim: var(--dim);
+  --color-graphite: var(--graphite);
+  --color-rule-hard: var(--rule-hard);
+  --color-flag: var(--flag);
+  --color-flag-tint: var(--flag-tint);
+  --color-watch: var(--watch);
+  --color-watch-tint: var(--watch-tint);
+  --color-clear: var(--clear);
+  --color-clear-tint: var(--clear-tint);
+
+  --radius-sm: 0rem;
+  --radius-md: 0rem;
+  --radius-lg: 0rem;
+  --radius-xl: 0rem;
+  --radius-2xl: 0rem;
+  --radius-3xl: 0rem;
+  --radius-4xl: 0rem;
 }
 
 @theme {
-  /*
-   * Domain colours, on top of the semantic ones. Three tones carry meaning that
-   * shadcn has no token for, so they keep their own names:
-   *   seal   overdue money, and only that
-   *   amber  attention — late submissions, deadlines closing
-   *   sage   settled, published, in good standing
-   */
-  /* The one tone between ink and muted: body copy that is not a heading. */
-  --color-ink-soft: #3c4c5c;
-
-  --color-seal: #7a2e2e;
-  --color-seal-tint: #f6ecea;
-  --color-amber: #9a6410;
-  --color-amber-tint: #fbf1e0;
-  --color-sage: #2f6b55;
-  --color-sage-tint: #e8f1ec;
-
-  --font-display: var(--font-spectral), Georgia, "Times New Roman", serif;
-  --font-heading: var(--font-spectral), Georgia, "Times New Roman", serif;
-  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
+  --font-display: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --font-heading: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-spline-mono), ui-monospace, "SF Mono", monospace;
 }
 
 @layer base {
@@ -181,44 +224,59 @@
     @apply bg-background;
   }
 
-  /* Numbers must line up in a ledger. */
-  table {
+  /* Figures must line up down a column, whatever the digits are. */
+  table,
+  .tabular {
     font-variant-numeric: tabular-nums;
   }
 
   :focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline-offset: 1px;
   }
 
   ::selection {
-    background: var(--foreground);
-    color: var(--background);
+    background: var(--ink);
+    color: var(--paper);
   }
 }
 
 @layer components {
   /*
-   * The signature element: a status stamp. Registry files are stamped, so
-   * statuses are stamped here too — uppercase mono with tight tracking, applied
-   * over shadcn's Badge, which supplies the layout, the border and the focus
-   * ring. Only the typography lives here; anything a Tailwind utility could
-   * conflict with is set on the component itself.
+   * The register heading: Archivo run wide and heavy, the way a form header or
+   * a filing-cabinet drawer label is lettered. Reserved for the one heading
+   * that names the screen, so it never competes with itself.
    */
-  .stamp {
-    font-family: var(--font-mono);
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-    line-height: 1.2;
+  .masthead {
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 118;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 0.95;
   }
 
-  /* An eyebrow above a page title — the file-divider tab of the layout. */
-  .eyebrow {
+  /*
+   * A column heading. Small mono capitals — the only place in the interface
+   * that treatment is allowed, so it always means "this labels a column".
+   */
+  .colhead {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    letter-spacing: 0.16em;
+    font-weight: 500;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
-    color: var(--muted-foreground);
+  }
+
+  /*
+   * A mark in the margin. Registrars annotate the left edge of a printed
+   * register; this is that, as a solid block, so a row wanting attention is
+   * findable at arm's length without reading a word of it.
+   */
+  .margin-mark {
+    display: block;
+    width: 0.1875rem;
+    height: 1.125rem;
+    background: currentColor;
   }
 }
 

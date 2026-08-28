@@ -30,7 +30,6 @@ export default async function AssessmentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Assessment"
         title="Assessments"
         lede="Deadlines, what has come in against them, and how much of it is still unmarked or unpublished."
       />

@@ -17,9 +17,9 @@ export default function ErrorBoundary({
 }) {
   return (
     <Panel className="mx-auto max-w-xl px-6 py-10 text-center">
-      <p className="eyebrow">Something went wrong</p>
-      <h1 className="mt-2 font-display text-2xl">This page could not be loaded.</h1>
-      <p className="mt-3 text-sm text-ink-soft">
+      <p className="colhead text-dim">Something went wrong</p>
+      <h1 className="mt-2 font-semibold text-2xl">This page could not be loaded.</h1>
+      <p className="mt-3 text-sm text-graphite">
         Nothing was saved or changed. Try again — if it keeps happening, the
         database may be unreachable; check that it is running and that
         <code className="mx-1 font-mono text-xs">DATABASE_URL</code> is correct.

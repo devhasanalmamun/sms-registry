@@ -3,7 +3,7 @@ import { staffOnly } from "@/lib/guards";
 import { getRegistryOverview } from "@/server/queries";
 import { formatDate, formatMoney, relativeToNow } from "@/lib/format";
 import { sumDecimals } from "@/lib/money";
-import { Figure, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
+import { Figure, Footing, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
 import { ArrearsTable } from "@/components/tables/arrears-table";
 
 export const dynamic = "force-dynamic";
@@ -41,17 +41,19 @@ export default async function DashboardPage() {
     balance: Number(s.fees.balance.toFixed(2)),
   }));
 
+  const today = formatDate(new Date());
+
   return (
     <>
       <PageHeader
-        eyebrow={`Registry desk · ${formatDate(new Date())}`}
+        reference={today}
         title="Today"
         lede="Everything on this page is something a person has to do. Counts and totals live below it."
       />
 
       {nothingToDo ? (
         <Panel className="mb-6 px-4 py-8 text-center">
-          <p className="font-display text-lg">Nothing outstanding.</p>
+          <p className="font-semibold text-lg">Nothing outstanding.</p>
           <p className="mt-1 text-sm text-muted-foreground">
             No arrears, no unmarked scripts, no withheld results.
           </p>
@@ -71,7 +73,7 @@ export default async function DashboardPage() {
             action={
               <Link
                 href="/fees?filter=overdue"
-                className="text-sm text-foreground underline underline-offset-4 hover:text-seal"
+                className="text-sm text-foreground underline underline-offset-4 hover:text-flag"
               >
                 Open the fees ledger
               </Link>
@@ -108,7 +110,7 @@ export default async function DashboardPage() {
                     {submission.student.fullName}
                   </Link>
                   {submission.isLate ? (
-                    <Stamp tone="amber" className="ml-2">
+                    <Stamp tone="watch" className="ml-2">
                       Late
                     </Stamp>
                   ) : null}
@@ -154,7 +156,7 @@ export default async function DashboardPage() {
                       {result.assessment.title} · marked {formatDate(result.markedAt)}
                     </p>
                   </div>
-                  <Stamp tone="seal">Withheld</Stamp>
+                  <Stamp tone="flag">Withheld</Stamp>
                 </li>
               ))}
             </ul>
@@ -182,7 +184,7 @@ export default async function DashboardPage() {
                     >
                       {submission.student.fullName}
                     </Link>
-                    <Stamp tone="amber">Late</Stamp>
+                    <Stamp tone="watch">Late</Stamp>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {assessment.title} · deadline was {formatDate(assessment.dueAt)},
@@ -222,7 +224,7 @@ export default async function DashboardPage() {
                       {assessment.module} · {assessment.submissions.length} in so far
                     </p>
                   </div>
-                  <span className="shrink-0 font-mono text-xs text-amber">
+                  <span className="shrink-0 font-mono text-xs text-watch">
                     {relativeToNow(assessment.dueAt)}
                   </span>
                 </li>
@@ -235,18 +237,18 @@ export default async function DashboardPage() {
       {/* The footing: counts, kept subordinate to the work above. */}
       <Panel className="mt-6">
         <PanelHeader title="The register" hint="Headcount as it stands." />
-        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 lg:grid-cols-6">
+        <Footing>
           <Figure value={overview.counts.total} label="On the register" />
-          <Figure value={overview.counts.enrolled} label="Enrolled" tone="sage" />
+          <Figure value={overview.counts.enrolled} label="Enrolled" tone="clear" />
           <Figure value={overview.counts.deferred} label="Deferred" />
           <Figure value={overview.counts.withdrawn} label="Withdrawn" />
           <Figure value={overview.counts.completed} label="Completed" />
           <Figure
             value={overview.counts.inCredit}
             label="In credit"
-            tone={overview.counts.inCredit > 0 ? "amber" : "neutral"}
+            tone={overview.counts.inCredit > 0 ? "watch" : "neutral"}
           />
-        </div>
+        </Footing>
       </Panel>
     </>
   );

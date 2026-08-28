@@ -3,7 +3,7 @@ import { listStudents } from "@/server/queries";
 import { formatDate, formatMoney } from "@/lib/format";
 import { Prisma } from "@/generated/prisma/client";
 import { ZERO } from "@/lib/money";
-import { EmptyState, Figure, LinkButton, PageHeader, Panel, PanelHeader } from "@/components/registry";
+import { EmptyState, Figure, Footing, LinkButton, PageHeader, Panel, PanelHeader } from "@/components/registry";
 import { FeesTable } from "@/components/tables/fees-table";
 
 export const dynamic = "force-dynamic";
@@ -96,7 +96,6 @@ export default async function FeesPage({
   return (
     <>
       <PageHeader
-        eyebrow="Bursary"
         title="Fees"
         lede="Charges raised, payments received, and who is actually behind. A balance is not arrears until a charge has passed its due date."
       />
@@ -106,21 +105,21 @@ export default async function FeesPage({
           title="Position across the register"
           hint={`${collected.toFixed(1)}% of everything charged has been received.`}
         />
-        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-5">
+        <Footing>
           <Figure value={formatMoney(totals.charged.toFixed(2))} label="Charged" />
-          <Figure value={formatMoney(totals.paid.toFixed(2))} label="Received" tone="sage" />
+          <Figure value={formatMoney(totals.paid.toFixed(2))} label="Received" tone="clear" />
           <Figure value={formatMoney(totals.outstanding.toFixed(2))} label="Outstanding" />
           <Figure
             value={formatMoney(totals.overdue.toFixed(2))}
             label="In arrears"
-            tone={totals.overdue.greaterThan(0) ? "seal" : "neutral"}
+            tone={totals.overdue.greaterThan(0) ? "flag" : "neutral"}
           />
           <Figure
             value={formatMoney(totals.credit.toFixed(2))}
             label="Held in credit"
-            tone={totals.credit.greaterThan(0) ? "amber" : "neutral"}
+            tone={totals.credit.greaterThan(0) ? "watch" : "neutral"}
           />
-        </div>
+        </Footing>
       </Panel>
 
       <nav className="mb-4 flex flex-wrap gap-2" aria-label="Filter accounts">
@@ -146,7 +145,7 @@ export default async function FeesPage({
           </EmptyState>
         ) : (
           <>
-            <p className="border-b border-border px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-muted-foreground">
+            <p className="border-b border-rule px-4 py-2 text-[0.8125rem] text-muted-foreground">
               {rows.length} {rows.length === 1 ? "account" : "accounts"} ·{" "}
               {filters.find((f) => f.key === filter)?.hint}
             </p>

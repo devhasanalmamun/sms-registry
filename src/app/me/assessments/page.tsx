@@ -21,14 +21,13 @@ export default async function MyAssessmentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Submissions"
         title="My work"
         lede="One submission per assessment. Before the deadline you can replace it as often as you like; after it, what is on record stands."
       />
 
       {withdrawn ? (
         <div className="mb-6">
-          <Notice tone="seal">
+          <Notice tone="flag">
             Your enrolment is recorded as withdrawn, so new submissions are
             closed. Contact Registry if that is not right.
           </Notice>
@@ -49,7 +48,7 @@ export default async function MyAssessmentsPage() {
               <Panel key={assessment.id}>
                 <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-border px-4 py-3">
                   <div>
-                    <h2 className="font-display text-lg leading-tight">
+                    <h2 className="font-semibold text-lg leading-tight">
                       {assessment.title}
                     </h2>
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -57,11 +56,11 @@ export default async function MyAssessmentsPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-xs text-ink-soft">
+                    <p className="font-mono text-xs text-graphite">
                       {formatDateTime(assessment.dueAt)}
                     </p>
                     <p
-                      className={`text-xs ${closed ? "text-muted-foreground" : "text-amber"}`}
+                      className={`text-xs ${closed ? "text-muted-foreground" : "text-watch"}`}
                     >
                       {closed
                         ? `deadline passed ${relativeToNow(assessment.dueAt)}`
@@ -90,19 +89,19 @@ export default async function MyAssessmentsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {submission.isLate ? (
-                          <Stamp tone="amber">Late</Stamp>
+                          <Stamp tone="watch">Late</Stamp>
                         ) : (
-                          <Stamp tone="sage">On time</Stamp>
+                          <Stamp tone="clear">On time</Stamp>
                         )}
                         {releasedScore !== null ? (
-                          <Stamp tone="sage">Marked {releasedScore}/100</Stamp>
+                          <Stamp tone="clear">Marked {releasedScore}/100</Stamp>
                         ) : (
                           <Stamp tone="quiet">Awaiting result</Stamp>
                         )}
                       </div>
                     </div>
                   ) : closed ? (
-                    <Notice tone="seal">
+                    <Notice tone="flag">
                       Nothing was submitted before the deadline. You can still
                       upload — it will be recorded as late and referred to the
                       board.

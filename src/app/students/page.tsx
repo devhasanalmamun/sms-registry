@@ -73,7 +73,6 @@ export default async function StudentsPage({
   return (
     <>
       <PageHeader
-        eyebrow="Register"
         title="Students"
         lede="Every student on the register, whatever their standing. Withdrawn and completed records stay searchable — Registry is asked about former students constantly."
         action={
@@ -123,7 +122,7 @@ export default async function StudentsPage({
           </EmptyState>
         ) : (
           <>
-            <p className="border-b border-border px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-muted-foreground">
+            <p className="border-b border-rule px-4 py-2 text-[0.8125rem] text-muted-foreground">
               {students.length} {students.length === 1 ? "record" : "records"}
               {filtered ? " matching" : ""}
             </p>

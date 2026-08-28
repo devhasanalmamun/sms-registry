@@ -33,7 +33,7 @@ const columns: ColumnDef<ReleasedResultRow, unknown>[] = [
           {row.original.module}
         </span>
         {row.original.feedback ? (
-          <p className="mt-1.5 max-w-md border-l-2 border-input pl-3 text-sm text-ink-soft">
+          <p className="mt-1.5 max-w-md border-l-2 border-input pl-3 text-sm text-graphite">
             {row.original.feedback}
           </p>
         ) : null}
@@ -56,7 +56,7 @@ const columns: ColumnDef<ReleasedResultRow, unknown>[] = [
     accessorKey: "classification",
     header: "Classification",
     cell: ({ row }) => (
-      <Stamp tone={row.original.passed ? "sage" : "seal"}>
+      <Stamp tone={row.original.passed ? "clear" : "flag"}>
         {row.original.classification}
       </Stamp>
     ),

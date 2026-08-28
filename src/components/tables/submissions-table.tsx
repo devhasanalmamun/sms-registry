@@ -44,7 +44,7 @@ const columns: ColumnDef<SubmissionRow, unknown>[] = [
       <>
         <span className="font-mono text-xs">{row.original.submitted}</span>
         {row.original.isLate ? (
-          <Stamp tone="amber" className="ml-2">
+          <Stamp tone="watch" className="ml-2">
             Late
           </Stamp>
         ) : null}
@@ -71,7 +71,7 @@ const columns: ColumnDef<SubmissionRow, unknown>[] = [
   {
     accessorKey: "attempt",
     header: "Attempt",
-    meta: { numeric: true, cellClassName: "text-ink-soft" },
+    meta: { numeric: true, cellClassName: "text-graphite" },
   },
 ];
 
@@ -80,6 +80,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
     <DataTable
       columns={columns}
       data={rows}
+      mark={(r) => (r.isLate ? { tone: "watch", label: "Submitted late" } : null)}
       initialSorting={[{ id: "submittedMs", desc: true }]}
       caption="Submitted work"
     />

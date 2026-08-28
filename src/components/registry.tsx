@@ -28,23 +28,28 @@ import { cn } from "@/lib/utils";
  *
  * Everything under `src/components/ui` is shadcn as the CLI generated it, and
  * stays that way so it can be re-added or updated. This file is the layer above:
- * the handful of compositions this domain needs — a stamped status, a ruled
- * panel, a labelled field, a ledger cell — each built from those primitives
- * rather than from raw elements.
+ * the compositions this domain needs, each built from those primitives.
+ *
+ * One typographic rule holds the whole interface together, and it is worth
+ * stating because breaking it is what makes an interface shout: **mono capitals
+ * label a column, and nothing else.** Page titles are Archivo. Field labels are
+ * ordinary sentence-case text. Only a column heading and a status marker are
+ * set in small mono capitals, so that treatment keeps its meaning.
  */
 
 /* -------------------------------------------------------------------------- */
-/* Stamp — the signature element. Statuses are stamped, the way a paper file   */
-/* in a records office is stamped. A shadcn Badge, squared off and set in mono. */
+/* Marker — a status, in the vocabulary of a printed register.                 */
 /* -------------------------------------------------------------------------- */
 
-const stampTones = {
-  neutral: "text-foreground/70",
-  seal: "text-destructive bg-seal-tint",
-  amber: "text-amber bg-amber-tint",
-  sage: "text-sage bg-sage-tint",
-  quiet: "text-muted-foreground",
+const tones = {
+  neutral: "border-rule-hard text-graphite bg-transparent",
+  flag: "border-flag/35 text-flag bg-flag-tint",
+  watch: "border-watch/35 text-watch bg-watch-tint",
+  clear: "border-clear/35 text-clear bg-clear-tint",
+  quiet: "border-rule text-dim bg-transparent",
 } as const;
+
+export type Tone = keyof typeof tones;
 
 export function Stamp({
   tone = "neutral",
@@ -52,7 +57,7 @@ export function Stamp({
   className,
   children,
 }: {
-  tone?: keyof typeof stampTones;
+  tone?: Tone;
   struck?: boolean;
   className?: string;
   children: ReactNode;
@@ -61,10 +66,12 @@ export function Stamp({
     <Badge
       variant="outline"
       className={cn(
-        "stamp h-auto rounded-none border-current px-1.5 py-0.5 text-[0.625rem]",
-        stampTones[tone],
-        // The one place a stamp is allowed to sit askew: an unreleased result.
-        struck && "-rotate-4 border-2 px-2.5 py-1 text-xs tracking-[0.16em]",
+        "colhead h-auto border px-1.5 py-[0.1875rem] text-[0.625rem] leading-none",
+        tones[tone],
+        // `struck` marks the one state a student is told about but not given:
+        // a result held back. It gets the heavier rule so it reads as applied
+        // to the record rather than describing it.
+        struck && "border-2 px-2.5 py-1.5 text-[0.6875rem] tracking-[0.14em]",
         className,
       )}
     >
@@ -77,13 +84,13 @@ export function Stamp({
 /* Surfaces                                                                    */
 /* -------------------------------------------------------------------------- */
 
-/** A shadcn Card, squared off and stripped of its padding: content rules to the edge. */
+/** A sheet: a shadcn Card, squared off, its padding removed so tables rule to the edge. */
 export function Panel({ className, ...rest }: ComponentProps<typeof Card>) {
   return (
     <Card
       {...rest}
       className={cn(
-        "min-w-0 gap-0 rounded-none border border-border py-0 ring-0",
+        "min-w-0 gap-0 border border-rule py-0 shadow-none ring-0",
         className,
       )}
     />
@@ -100,40 +107,56 @@ export function PanelHeader({
   action?: ReactNode;
 }) {
   return (
-    // The local --card-spacing keeps CardHeader's `[.border-b]:pb-` in step
-    // with the py-3 this header actually wants.
-    <CardHeader className="items-baseline border-b px-4 py-3 [--card-spacing:--spacing(3)]">
-      <CardTitle className="font-display text-lg leading-tight">
+    <CardHeader className="items-baseline border-b border-rule px-4 py-3 [--card-spacing:--spacing(3)]">
+      <CardTitle className="font-sans text-[0.9375rem] font-semibold tracking-[-0.005em]">
         {title}
       </CardTitle>
-      {hint ? <CardDescription className="text-xs">{hint}</CardDescription> : null}
+      {hint ? (
+        <CardDescription className="text-[0.8125rem] leading-snug">
+          {hint}
+        </CardDescription>
+      ) : null}
       {action ? <CardAction>{action}</CardAction> : null}
     </CardHeader>
   );
 }
 
-/** A page title block. The eyebrow names the register you are looking at. */
+/**
+ * The head of a page.
+ *
+ * No decorative eyebrow. `reference` is for the record this screen *is* — a
+ * student number, a module code — set in mono because that is what a reference
+ * is for: reading down a phone line. Screens that are not about one record
+ * simply do not pass one, rather than captioning themselves with the name of
+ * the nav item that got you here.
+ */
 export function PageHeader({
-  eyebrow,
+  reference,
   title,
   lede,
   action,
 }: {
-  eyebrow: ReactNode;
+  reference?: ReactNode;
   title: string;
   lede?: ReactNode;
   action?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-input pb-4">
-      <div className="max-w-2xl">
-        <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-1 font-display text-3xl leading-tight tracking-tight">
-          {title}
-        </h1>
-        {lede ? <p className="mt-2 text-sm text-ink-soft">{lede}</p> : null}
+    <header className="mb-6 border-b-2 border-ink pb-3">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          {reference ? (
+            <p className="mb-1.5 font-mono text-xs text-graphite">{reference}</p>
+          ) : null}
+          <h1 className="masthead text-[2rem] sm:text-[2.5rem]">{title}</h1>
+        </div>
+        {action}
       </div>
-      {action}
+      {lede ? (
+        <p className="mt-3 max-w-3xl text-[0.9375rem] leading-relaxed text-graphite">
+          {lede}
+        </p>
+      ) : null}
     </header>
   );
 }
@@ -159,7 +182,7 @@ export function LinkButton({
   );
 }
 
-/** A labelled control, with room for a hint or a validation message. */
+/** A labelled control. The label is a label: sentence case, quiet, out of the way. */
 export function Field({
   label,
   hint,
@@ -177,19 +200,16 @@ export function Field({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <Label
-        htmlFor={htmlFor}
-        className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-ink-soft"
-      >
+      <Label htmlFor={htmlFor} className="text-[0.8125rem] font-medium text-graphite">
         {label}
       </Label>
       {children}
       {error ? (
-        <p className="text-xs text-destructive" role="alert">
+        <p className="text-xs text-flag" role="alert">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="text-xs leading-snug text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );
@@ -228,23 +248,27 @@ export function SelectField({
     <SelectItem key={option.value} value={option.value}>
       {option.label}
       {option.hint ? (
-        <span className="ml-1.5 text-xs text-muted-foreground">{option.hint}</span>
+        <span className="ml-1.5 font-mono text-xs text-muted-foreground">
+          {option.hint}
+        </span>
       ) : null}
     </SelectItem>
   );
 
   return (
     <Select name={name} defaultValue={defaultValue} required={required}>
-      <SelectTrigger id={id} aria-invalid={invalid || undefined} className="w-full">
+      <SelectTrigger
+        id={id}
+        aria-invalid={invalid || undefined}
+        className="h-9 w-full bg-card"
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent position="popper">
         {options?.map(renderOption)}
         {groups?.map((group) => (
           <SelectGroup key={group.label}>
-            <SelectLabel className="font-mono text-[0.625rem] uppercase tracking-[0.13em]">
-              {group.label}
-            </SelectLabel>
+            <SelectLabel className="colhead text-dim">{group.label}</SelectLabel>
             {group.options.map(renderOption)}
           </SelectGroup>
         ))}
@@ -259,7 +283,7 @@ export function Code({ className, ...rest }: ComponentProps<"span">) {
     <span
       {...rest}
       className={cn(
-        "whitespace-nowrap font-mono text-[0.8125rem] text-ink-soft",
+        "whitespace-nowrap font-mono text-[0.8125rem] text-graphite",
         className,
       )}
     />
@@ -267,7 +291,7 @@ export function Code({ className, ...rest }: ComponentProps<"span">) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Empty and error states — an empty screen is an invitation to act.           */
+/* Empty states — an empty screen is an invitation to act.                     */
 /* -------------------------------------------------------------------------- */
 
 export function EmptyState({
@@ -281,7 +305,7 @@ export function EmptyState({
 }) {
   return (
     <div className="px-4 py-12 text-center">
-      <p className="font-display text-base text-foreground">{title}</p>
+      <p className="text-[0.9375rem] font-semibold">{title}</p>
       {children ? (
         <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">
           {children}
@@ -296,27 +320,55 @@ export function Notice({
   tone = "neutral",
   children,
 }: {
-  tone?: "neutral" | "seal" | "amber" | "sage";
+  tone?: Tone;
   children: ReactNode;
 }) {
-  const tones = {
-    neutral: "border-input bg-background text-ink-soft",
-    seal: "border-destructive/30 bg-seal-tint text-destructive",
-    amber: "border-amber/30 bg-amber-tint text-amber",
-    sage: "border-sage/30 bg-sage-tint text-sage",
+  const noticeTones = {
+    neutral: "border-rule-hard bg-band text-graphite",
+    flag: "border-flag/30 bg-flag-tint text-flag",
+    watch: "border-watch/30 bg-watch-tint text-watch",
+    clear: "border-clear/30 bg-clear-tint text-clear",
+    quiet: "border-rule bg-band text-dim",
   } as const;
 
   return (
-    <p className={cn("border px-3 py-2 text-sm", tones[tone])} role="status">
+    <p
+      className={cn("border-l-2 px-3 py-2 text-sm", noticeTones[tone])}
+      role="status"
+    >
       {children}
     </p>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* The footing — the totals line ruled across the bottom of a ledger page.     */
+/* -------------------------------------------------------------------------- */
+
 /**
- * A figure in the register summary: a number and what it counts. Deliberately
- * small — the dashboard leads with the work to be done, not with big numbers.
+ * Five equal boxes each shouting a number is a dashboard, and a registrar has
+ * no use for one. A ledger states its position in a single ruled line, read
+ * left to right as a sentence about the account, so that is what this is.
  */
+export function Footing({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "tabular flex flex-wrap items-stretch border-y border-rule bg-card",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function Figure({
   value,
   label,
@@ -324,20 +376,21 @@ export function Figure({
 }: {
   value: ReactNode;
   label: string;
-  tone?: "neutral" | "seal" | "amber" | "sage";
+  tone?: Tone;
 }) {
-  const tones = {
+  const figureTones = {
     neutral: "text-foreground",
-    seal: "text-destructive",
-    amber: "text-amber",
-    sage: "text-sage",
+    flag: "text-flag",
+    watch: "text-watch",
+    clear: "text-clear",
+    quiet: "text-dim",
   } as const;
 
   return (
-    <div className="px-4 py-3">
-      <p className={cn("font-mono text-xl leading-none", tones[tone])}>{value}</p>
-      <p className="mt-1.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-muted-foreground">
-        {label}
+    <div className="grow border-r border-rule px-4 py-2.5 last:border-r-0">
+      <p className="colhead text-dim">{label}</p>
+      <p className={cn("mt-1 font-mono text-[0.9375rem]", figureTones[tone])}>
+        {value}
       </p>
     </div>
   );

@@ -8,10 +8,10 @@ import { Stamp } from "@/components/registry";
  * every row shouts is a register nobody scans. Everything else is an exception
  * that changes what Registry may do with the record.
  */
-const tones: Record<EnrolmentStatus, { tone: "sage" | "amber" | "neutral" | "quiet"; label: string }> =
+const tones: Record<EnrolmentStatus, { tone: "clear" | "watch" | "neutral" | "quiet"; label: string }> =
   {
-    ENROLLED: { tone: "sage", label: "Enrolled" },
-    DEFERRED: { tone: "amber", label: "Deferred" },
+    ENROLLED: { tone: "clear", label: "Enrolled" },
+    DEFERRED: { tone: "watch", label: "Deferred" },
     WITHDRAWN: { tone: "neutral", label: "Withdrawn" },
     COMPLETED: { tone: "quiet", label: "Completed" },
   };

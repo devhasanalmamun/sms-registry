@@ -52,7 +52,7 @@ const columns: ColumnDef<AssessmentRow, unknown>[] = [
       <>
         <span className="font-mono text-xs">{row.original.deadline}</span>
         <span
-          className={`block text-xs ${row.original.closed ? "text-muted-foreground" : "text-amber"}`}
+          className={`block text-xs ${row.original.closed ? "text-muted-foreground" : "text-watch"}`}
         >
           {row.original.closed
             ? `closed ${row.original.relative}`
@@ -77,7 +77,7 @@ const columns: ColumnDef<AssessmentRow, unknown>[] = [
     header: "Late",
     cell: ({ row }) => (
       <span
-        className={row.original.late > 0 ? "text-amber" : "text-muted-foreground"}
+        className={row.original.late > 0 ? "text-watch" : "text-muted-foreground"}
       >
         {row.original.late || "—"}
       </span>
@@ -107,13 +107,26 @@ const columns: ColumnDef<AssessmentRow, unknown>[] = [
       row.original.marked === 0 ? (
         <span className="text-xs text-muted-foreground">Not marked</span>
       ) : row.original.withheld > 0 ? (
-        <Stamp tone="seal">{row.original.withheld} withheld</Stamp>
+        <Stamp tone="flag">{row.original.withheld} withheld</Stamp>
       ) : (
-        <Stamp tone="sage">All published</Stamp>
+        <Stamp tone="clear">All published</Stamp>
       ),
   },
 ];
 
 export function AssessmentsTable({ rows }: { rows: AssessmentRow[] }) {
-  return <DataTable columns={columns} data={rows} caption="Assessments" />;
+  return (
+    <DataTable
+      columns={columns}
+      data={rows}
+      mark={(r) =>
+        r.withheld > 0
+          ? { tone: "flag", label: "Results withheld" }
+          : r.awaitingMark > 0
+            ? { tone: "watch", label: "Awaiting a mark" }
+            : null
+      }
+      caption="Assessments"
+    />
+  );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { EnrolmentStatus } from "@/generated/prisma/enums";
 import { DataTable, type ColumnDef } from "@/components/data-table";
-import { Code, LinkButton, Stamp } from "@/components/registry";
+import { Code } from "@/components/registry";
 import { StatusStamp } from "@/components/status-stamp";
 import { formatMoney } from "@/lib/format";
 
@@ -52,12 +52,7 @@ const columns: ColumnDef<FeeRow, unknown>[] = [
     accessorKey: "status",
     header: "Standing",
     enableSorting: false,
-    cell: ({ row }) => (
-      <div className="flex flex-wrap items-center gap-1.5">
-        <StatusStamp status={row.original.status} />
-        {row.original.inCredit ? <Stamp tone="amber">Credit</Stamp> : null}
-      </div>
-    ),
+    cell: ({ row }) => <StatusStamp status={row.original.status} />,
   },
   {
     id: "nextDue",
@@ -65,25 +60,25 @@ const columns: ColumnDef<FeeRow, unknown>[] = [
     // Sort by the underlying instant, not by "22 Jul 2026" as text.
     accessorFn: (row) => (row.nextDue ? Date.parse(row.nextDue) : Infinity),
     cell: ({ row }) => row.original.nextDue ?? "—",
-    meta: { cellClassName: "font-mono text-xs text-ink-soft" },
+    meta: { cellClassName: "font-mono text-xs text-graphite" },
   },
   {
     accessorKey: "charged",
     header: "Charged",
     cell: ({ row }) => formatMoney(row.original.charged),
-    meta: { numeric: true, cellClassName: "text-ink-soft" },
+    meta: { numeric: true, cellClassName: "text-graphite" },
   },
   {
     accessorKey: "paid",
     header: "Received",
     cell: ({ row }) => formatMoney(row.original.paid),
-    meta: { numeric: true, cellClassName: "text-sage" },
+    meta: { numeric: true, cellClassName: "text-clear" },
   },
   {
     accessorKey: "balance",
     header: "Balance",
     cell: ({ row }) => (
-      <span className={row.original.inCredit ? "text-amber" : ""}>
+      <span className={row.original.inCredit ? "text-watch" : ""}>
         {formatMoney(row.original.balance)}
       </span>
     ),
@@ -105,17 +100,6 @@ const columns: ColumnDef<FeeRow, unknown>[] = [
     ),
     meta: { numeric: true },
   },
-  {
-    id: "actions",
-    header: "",
-    enableSorting: false,
-    cell: ({ row }) => (
-      <LinkButton href={`/students/${row.original.id}`} size="sm" variant="outline">
-        Take payment
-      </LinkButton>
-    ),
-    meta: { cellClassName: "text-right" },
-  },
 ];
 
 export function FeesTable({ rows }: { rows: FeeRow[] }) {
@@ -123,6 +107,13 @@ export function FeesTable({ rows }: { rows: FeeRow[] }) {
     <DataTable
       columns={columns}
       data={rows}
+      mark={(r) =>
+        r.isOverdue
+          ? { tone: "flag", label: "Past a due date" }
+          : r.inCredit
+            ? { tone: "watch", label: "In credit" }
+            : null
+      }
       minWidth="58rem"
       caption="Fee accounts"
     />

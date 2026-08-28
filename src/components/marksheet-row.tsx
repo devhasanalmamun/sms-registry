@@ -58,7 +58,7 @@ export function MarksheetGradeForm({
           step={1}
           defaultValue={score ?? ""}
           aria-label="Mark out of 100"
-          className="w-20 text-right font-mono"
+          className="w-16 text-right font-mono"
           aria-invalid={Boolean(state.errors?.score)}
           required
         />
@@ -77,7 +77,7 @@ export function MarksheetGradeForm({
         defaultValue={feedback ?? ""}
         placeholder="Feedback (optional)"
         aria-label="Feedback"
-        className="w-44"
+        className="w-36"
       />
       <SaveButton dirtyLabel={score === null ? "Save" : "Update"} />
     </form>
@@ -86,5 +86,5 @@ export function MarksheetGradeForm({
 
 /** Rendered when a mark has been changed since it was published. */
 export function RemarkedNotice() {
-  return <Stamp tone="amber">Re-marked</Stamp>;
+  return <Stamp tone="watch">Re-marked</Stamp>;
 }

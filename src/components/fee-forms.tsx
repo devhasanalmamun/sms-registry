@@ -36,7 +36,7 @@ export function PaymentForm({ studentId }: { studentId: string }) {
 
       {state.message ? (
         <div className="sm:col-span-2">
-          <Notice tone={state.ok ? "sage" : "seal"}>{state.message}</Notice>
+          <Notice tone={state.ok ? "clear" : "flag"}>{state.message}</Notice>
         </div>
       ) : null}
 
@@ -118,7 +118,7 @@ export function ChargeForm({ studentId }: { studentId: string }) {
 
       {state.message ? (
         <div className="sm:col-span-2">
-          <Notice tone={state.ok ? "sage" : "seal"}>{state.message}</Notice>
+          <Notice tone={state.ok ? "clear" : "flag"}>{state.message}</Notice>
         </div>
       ) : null}
 

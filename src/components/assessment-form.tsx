@@ -34,7 +34,7 @@ export function AssessmentForm() {
     <form action={formAction} className="grid gap-4 p-4 sm:grid-cols-2">
       {state.message ? (
         <div className="sm:col-span-2">
-          <Notice tone="seal">{state.message}</Notice>
+          <Notice tone="flag">{state.message}</Notice>
         </div>
       ) : null}
 

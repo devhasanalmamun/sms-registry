@@ -228,43 +228,64 @@ implementation of "is this late", not two that can drift apart.
 
 The component layer is **shadcn/ui**, installed with the CLI (`components.json`
 is committed). Everything under `src/components/ui` is exactly what the registry
-generated and is left alone so it can be updated or re-added; `src/components/
-registry.tsx` is the layer above it, where this domain's compositions live — a
-stamped status is a `Badge`, a ruled panel is a `Card`, a labelled control is a
-`Label` plus a `Field`.
+generated and is left alone so it can be updated; `src/components/registry.tsx`
+is the layer above, where this domain's compositions live — a status marker is a
+`Badge`, a sheet is a `Card`, a labelled control is a `Label` plus a `Field`.
 
-Nothing about the look is achieved by forking those components. It is done in
-`globals.css`, by giving shadcn's own semantic tokens institutional values:
+**The material is continuous stationery** — the banded "greenbar" paper
+university registries printed marksheets and fee ledgers onto, and the ruled
+official forms that go with it. Every visual decision comes from that, and each
+one is doing a job:
+
+- **Banded rows.** A fee row is eight columns wide and the eye loses its place
+  halfway across. Greenbar paper solved that in 1965 and it still works.
+- **An ink column head.** A printed register's headings sit in a solid bar,
+  which is also the honest way to say "this row is not data".
+- **A margin.** Every table opens with a narrow column that has no heading and
+  is blank on most rows. A mark appears there only where the row wants
+  something — money past due, work handed in late, a result still withheld.
+  Scanning the margin is triage, and a register in good order reads as an empty
+  left edge. It is deliberately absent from lists that are *entirely*
+  exceptions, like the arrears panel: a mark on every row restates the filter
+  instead of picking anything out.
+
+Nothing about the look is achieved by forking a shadcn component. It is done in
+`globals.css`, by giving shadcn's own semantic tokens registry values:
 
 | shadcn token | Registry value |
 | --- | --- |
-| `background` / `foreground` | paper / ink |
+| `background` / `foreground` | ground / ink |
+| `card` | the sheet |
+| `muted` | the band |
 | `primary` | ink |
-| `destructive` | seal — the oxblood reserved for overdue money |
+| `destructive` | flag |
 | `border` / `input` | the two weights of ruling |
-| `radius` | `2px` — ruled boxes, not pills |
+| `radius` | `0` — printed forms are not rounded |
 
-`seal`, `amber` and `sage` keep their own names alongside those, because they
-carry meaning shadcn has no token for: money in arrears, work that is late, and
-anything settled or released. `destructive` is wired to `seal`, so a destructive
-button lands on the same colour by construction.
+There are three signal colours and no others: **flag** (money past its due date,
+a mark withheld), **watch** (late work, a deadline closing) and **clear**
+(settled, published, in good standing). `destructive` is wired to `flag`, so a
+destructive button lands on the right colour by construction.
+
+**Type** does three jobs and no more. Archivo, run wide and heavy, is the
+masthead and the page title — the lettering of a form header or a drawer label.
+Public Sans, drawn for US federal government forms, is interface text. Spline
+Sans Mono carries everything read off the screen and typed into another system:
+student numbers, payment references, amounts, dates.
+
+One typographic rule holds the rest together, and breaking it is what makes an
+interface shout: **small mono capitals label a column, and nothing else.** Not
+page eyebrows, not field labels, not row counts. A field label is sentence case
+and quiet, because a label's whole job is to get out of the way.
 
 Every table is **TanStack Table** driving the shadcn `Table` primitives — the
 shadcn data-table pattern. `src/components/data-table.tsx` is the shared shell
-and each file in `src/components/tables/` is one set of column definitions. The
-reason is not decoration: Registry staff re-sort constantly, and always by the
-column in front of them — who owes the most, what is due first, which scripts are
-still unmarked. Those lists are small enough to hold in the page, so sorting is
-client-side and the server query stays responsible for *which* rows are in the
-list. Sorting state is announced with `aria-sort`.
-
-It is styled as a records office rather than a SaaS dashboard: ink-on-paper,
-ruled tables with no zebra striping, and Spectral / IBM Plex Sans / IBM Plex Mono
-doing three distinct jobs. Anything a person reads off the screen and types into
-another system — student IDs, payment references, amounts, dates — is set in
-mono so the columns align and digits cannot be misread. Statuses are rendered as
-**stamps**, because a paper student file is stamped, and because it lets a dense
-table carry state without shouting.
+and each file in `src/components/tables/` is one set of column definitions.
+Registry staff re-sort constantly, and always by the column in front of them:
+who owes the most, what is due first, which scripts are still unmarked. Those
+lists are small enough to hold in the page, so sorting is client-side and the
+server query stays responsible for *which* rows are in the list. Sorting state
+is announced with `aria-sort`.
 
 ---
 
@@ -315,6 +336,13 @@ assisted with some boilerplate".
   painting the native button face under `appearance: button`. Sampling the PNG
   pixels showed `rgb(40,49,60)` — correct all along. I reverted the "fix". Read
   the measurement, not the screenshot.
+- **The first design was, in the user's words, "AI slop" — and it was.** Cream
+  background, high-contrast serif display, hairline rules, zero radius, dense
+  columns. That is two of the three looks current AI design converges on,
+  stacked. It was not a choice; it was a default I had arrived at without
+  noticing. The rebuild started from the subject instead — greenbar stationery,
+  ink column heads, an exception margin — and threw out the Spectral/IBM Plex
+  pairing, which is the other half of the same default.
 - **The interesting product decisions were mine.** Deriving the balance rather
   than storing it; separating "owing" from "in arrears"; re-marking
   un-publishing; showing students "not yet released" instead of nothing;

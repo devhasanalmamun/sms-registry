@@ -42,7 +42,7 @@ const columns: ColumnDef<ArrearsRow, unknown>[] = [
   {
     accessorKey: "programmeCode",
     header: "Programme",
-    meta: { cellClassName: "text-ink-soft" },
+    meta: { cellClassName: "text-graphite" },
   },
   {
     accessorKey: "status",
@@ -67,7 +67,7 @@ const columns: ColumnDef<ArrearsRow, unknown>[] = [
     accessorKey: "balance",
     header: "Total balance",
     cell: ({ row }) => formatMoney(row.original.balance),
-    meta: { numeric: true, cellClassName: "text-ink-soft" },
+    meta: { numeric: true, cellClassName: "text-graphite" },
   },
 ];
 

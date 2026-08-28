@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { EnrolmentStatus } from "@/generated/prisma/enums";
 import { DataTable, type ColumnDef } from "@/components/data-table";
-import { Code, Stamp } from "@/components/registry";
+import { Code } from "@/components/registry";
 import { StatusStamp } from "@/components/status-stamp";
 import { formatMoney } from "@/lib/format";
 
@@ -62,24 +62,18 @@ const columns: ColumnDef<StudentRow, unknown>[] = [
         </span>
       </>
     ),
-    meta: { cellClassName: "text-ink-soft" },
+    meta: { cellClassName: "text-graphite" },
   },
   {
     accessorKey: "academicYear",
     header: "Year",
-    meta: { numeric: true, cellClassName: "text-ink-soft" },
+    meta: { numeric: true, cellClassName: "text-graphite" },
   },
   {
     accessorKey: "status",
     header: "Status",
     enableSorting: false,
-    cell: ({ row }) => (
-      <div className="flex flex-wrap items-center gap-1.5">
-        <StatusStamp status={row.original.status} />
-        {row.original.isOverdue ? <Stamp tone="seal">Arrears</Stamp> : null}
-        {row.original.inCredit ? <Stamp tone="amber">In credit</Stamp> : null}
-      </div>
-    ),
+    cell: ({ row }) => <StatusStamp status={row.original.status} />,
   },
   {
     accessorKey: "balance",
@@ -91,8 +85,8 @@ const columns: ColumnDef<StudentRow, unknown>[] = [
           row.original.isOverdue
             ? "font-medium text-destructive"
             : row.original.balance <= 0
-              ? "text-sage"
-              : "text-ink-soft"
+              ? "text-clear"
+              : "text-graphite"
         }
       >
         {formatMoney(row.original.balance)}
@@ -106,6 +100,13 @@ export function StudentsTable({ rows }: { rows: StudentRow[] }) {
     <DataTable
       columns={columns}
       data={rows}
+      mark={(r) =>
+        r.isOverdue
+          ? { tone: "flag", label: "In arrears" }
+          : r.inCredit
+            ? { tone: "watch", label: "In credit" }
+            : null
+      }
       caption="Students on the register"
     />
   );

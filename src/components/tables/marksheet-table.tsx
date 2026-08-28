@@ -87,7 +87,7 @@ export function MarksheetTable({
                 {s.attempt > 1 ? ` · attempt ${s.attempt}` : ""}
               </span>
               {s.isLate ? (
-                <Stamp tone="amber" className="mt-1">
+                <Stamp tone="watch" className="mt-1">
                   Late
                 </Stamp>
               ) : null}
@@ -97,7 +97,7 @@ export function MarksheetTable({
       },
       {
         id: "mark",
-        header: "Mark and feedback",
+        header: "Mark",
         // Unmarked first: that is the pile still to work through.
         accessorFn: (row) => row.score ?? -1,
         cell: ({ row }) => (
@@ -112,19 +112,19 @@ export function MarksheetTable({
       },
       {
         id: "classification",
-        header: "Classification",
+        header: "Class",
         enableSorting: false,
         cell: ({ row }) => {
           if (row.original.score === null)
             return <span className="text-muted-foreground">—</span>;
           const band = classify(row.original.score);
           return band.passed ? (
-            band.band
+            band.short
           ) : (
-            <span className="text-destructive">{band.band}</span>
+            <span className="text-destructive">{band.short}</span>
           );
         },
-        meta: { cellClassName: "text-ink-soft" },
+        meta: { cellClassName: "text-graphite" },
       },
       {
         id: "released",
@@ -139,9 +139,9 @@ export function MarksheetTable({
               <input type="hidden" name="resultId" value={resultId} />
               <input type="hidden" name="publish" value={String(!published)} />
               {published ? (
-                <Stamp tone="sage">Published</Stamp>
+                <Stamp tone="clear">Published</Stamp>
               ) : (
-                <Stamp tone="seal">Withheld</Stamp>
+                <Stamp tone="flag">Withheld</Stamp>
               )}
               <Button
                 type="submit"
@@ -163,7 +163,14 @@ export function MarksheetTable({
     <DataTable
       columns={columns}
       data={rows}
-      minWidth="64rem"
+      mark={(r) =>
+        r.resultId && !r.published
+          ? { tone: "flag", label: "Result withheld" }
+          : r.submission?.isLate
+            ? { tone: "watch", label: "Submitted late" }
+            : null
+      }
+      minWidth="56rem"
       alignTop
       caption="Marking sheet"
     />

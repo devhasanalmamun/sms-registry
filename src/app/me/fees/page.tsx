@@ -1,7 +1,7 @@
 import { studentOnly } from "@/lib/guards";
 import { getStudentDetail } from "@/server/queries";
 import { formatDate, formatMoney } from "@/lib/format";
-import { Figure, Notice, PageHeader, Panel, PanelHeader } from "@/components/registry";
+import { Figure, Footing, Notice, PageHeader, Panel, PanelHeader } from "@/components/registry";
 import { ChargesTable, PaymentsTable } from "@/components/tables/ledger-tables";
 
 export const dynamic = "force-dynamic";
@@ -41,25 +41,24 @@ export default async function MyFeesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Fee account"
         title="My fees"
         lede={`${detail.programme.name} · Year ${detail.academicYear}`}
       />
 
       <div className="mb-6 space-y-3">
         {fees.isOverdue ? (
-          <Notice tone="seal">
+          <Notice tone="flag">
             {formatMoney(fees.overdueAmount.toFixed(2))} is past its due date.
             Contact the bursary office to arrange payment — this can affect your
             enrolment.
           </Notice>
         ) : fees.inCredit ? (
-          <Notice tone="amber">
+          <Notice tone="watch">
             Your account is {formatMoney(fees.balance.negated().toFixed(2))} in
             credit. The bursary office will be in touch about a refund.
           </Notice>
         ) : fees.balance.isZero() ? (
-          <Notice tone="sage">Your fees are fully paid. Nothing is outstanding.</Notice>
+          <Notice tone="clear">Your fees are fully paid. Nothing is outstanding.</Notice>
         ) : (
           <Notice tone="neutral">
             {formatMoney(fees.balance.toFixed(2))} remains, due{" "}
@@ -70,9 +69,9 @@ export default async function MyFeesPage() {
       </div>
 
       <Panel className="mb-6">
-        <div className="grid grid-cols-3 divide-x divide-border">
+        <Footing>
           <Figure value={formatMoney(fees.charged.toFixed(2))} label="Charged" />
-          <Figure value={formatMoney(fees.paid.toFixed(2))} label="Paid" tone="sage" />
+          <Figure value={formatMoney(fees.paid.toFixed(2))} label="Paid" tone="clear" />
           <Figure
             value={
               fees.inCredit
@@ -80,9 +79,9 @@ export default async function MyFeesPage() {
                 : formatMoney(fees.balance.toFixed(2))
             }
             label={fees.inCredit ? "In credit" : "Still to pay"}
-            tone={fees.isOverdue ? "seal" : fees.inCredit ? "amber" : "neutral"}
+            tone={fees.isOverdue ? "flag" : fees.inCredit ? "watch" : "neutral"}
           />
-        </div>
+        </Footing>
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-2">

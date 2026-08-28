@@ -6,7 +6,7 @@ import { classify } from "@/lib/grading";
 import { StatusStamp } from "@/components/status-stamp";
 import { StudentForm } from "@/components/student-form";
 import { ChargeForm, PaymentForm } from "@/components/fee-forms";
-import { Figure, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
+import { Figure, Footing, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
 import { ChargesTable, PaymentsTable } from "@/components/tables/ledger-tables";
 import { StudentResultsTable } from "@/components/tables/student-results-table";
 import { SubmissionsTable } from "@/components/tables/submissions-table";
@@ -92,18 +92,14 @@ export default async function StudentPage({
   return (
     <>
       <PageHeader
-        eyebrow={
-          <>
-            Register · <span className="font-mono">{student.studentId}</span>
-          </>
-        }
+        reference={student.studentId}
         title={student.fullName}
         lede={`${student.programme.code} — ${student.programme.name} · Year ${student.academicYear} · Enrolled ${formatDate(student.enrolledAt)}`}
         action={
           <div className="flex flex-wrap items-center gap-2">
             <StatusStamp status={student.status} />
-            {fees.isOverdue ? <Stamp tone="seal">Arrears</Stamp> : null}
-            {fees.inCredit ? <Stamp tone="amber">In credit</Stamp> : null}
+            {fees.isOverdue ? <Stamp tone="flag">Arrears</Stamp> : null}
+            {fees.inCredit ? <Stamp tone="watch">In credit</Stamp> : null}
           </div>
         }
       />
@@ -122,9 +118,9 @@ export default async function StudentPage({
                   : "Nothing outstanding."
           }
         />
-        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-4">
+        <Footing>
           <Figure value={formatMoney(fees.charged.toFixed(2))} label="Charged" />
-          <Figure value={formatMoney(fees.paid.toFixed(2))} label="Received" tone="sage" />
+          <Figure value={formatMoney(fees.paid.toFixed(2))} label="Received" tone="clear" />
           <Figure
             value={
               fees.inCredit
@@ -132,14 +128,14 @@ export default async function StudentPage({
                 : formatMoney(fees.balance.toFixed(2))
             }
             label={fees.inCredit ? "In credit" : "Balance"}
-            tone={fees.inCredit ? "amber" : fees.balance.greaterThan(0) ? "neutral" : "sage"}
+            tone={fees.inCredit ? "watch" : fees.balance.greaterThan(0) ? "neutral" : "clear"}
           />
           <Figure
             value={formatMoney(fees.overdueAmount.toFixed(2))}
             label="Overdue"
-            tone={fees.isOverdue ? "seal" : "neutral"}
+            tone={fees.isOverdue ? "flag" : "neutral"}
           />
-        </div>
+        </Footing>
       </Panel>
 
       {/* The ledger, kept as two columns: debits and credits. --------------- */}

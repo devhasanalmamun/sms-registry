@@ -6,7 +6,7 @@ import { publishAllResults } from "@/server/actions";
 import { averageScore } from "@/lib/grading";
 import { formatBytes, formatDateTime, relativeToNow } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Figure, PageHeader, Panel, PanelHeader } from "@/components/registry";
+import { Figure, Footing, PageHeader, Panel, PanelHeader } from "@/components/registry";
 import { MarksheetTable } from "@/components/tables/marksheet-table";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export default async function AssessmentPage({
   return (
     <>
       <PageHeader
-        eyebrow={`Assessment · ${assessment.module}`}
+        reference={assessment.module}
         title={assessment.title}
         lede={
           closed
@@ -79,7 +79,7 @@ export default async function AssessmentPage({
       />
 
       <Panel className="mb-6">
-        <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-5">
+        <Footing>
           <Figure
             value={`${submitted.length}/${rows.length}`}
             label="Submitted"
@@ -87,16 +87,16 @@ export default async function AssessmentPage({
           <Figure
             value={late.length}
             label="Late"
-            tone={late.length > 0 ? "amber" : "neutral"}
+            tone={late.length > 0 ? "watch" : "neutral"}
           />
           <Figure value={submitted.length - marked.length} label="Unmarked" />
           <Figure
             value={withheld.length}
             label="Withheld"
-            tone={withheld.length > 0 ? "seal" : "neutral"}
+            tone={withheld.length > 0 ? "flag" : "neutral"}
           />
           <Figure value={average ?? "—"} label="Mean mark" />
-        </div>
+        </Footing>
       </Panel>
 
       <Panel>

@@ -39,7 +39,7 @@ const chargeColumns: ColumnDef<ChargeRow, unknown>[] = [
     header: "Due",
     cell: ({ row }) => (
       <span
-        className={`font-mono text-xs ${row.original.pastDue ? "text-destructive" : "text-ink-soft"}`}
+        className={`font-mono text-xs ${row.original.pastDue ? "text-destructive" : "text-graphite"}`}
       >
         {row.original.due}
       </span>
@@ -70,13 +70,13 @@ const paymentColumns: ColumnDef<PaymentRow, unknown>[] = [
     accessorKey: "receivedMs",
     header: "Received",
     cell: ({ row }) => row.original.received,
-    meta: { cellClassName: "font-mono text-xs text-ink-soft" },
+    meta: { cellClassName: "font-mono text-xs text-graphite" },
   },
   {
     accessorKey: "amount",
     header: "Amount",
     cell: ({ row }) => formatMoney(row.original.amount),
-    meta: { numeric: true, cellClassName: "text-sage" },
+    meta: { numeric: true, cellClassName: "text-clear" },
   },
 ];
 
@@ -85,6 +85,7 @@ export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
     <DataTable
       columns={chargeColumns}
       data={rows}
+      mark={(r) => (r.pastDue ? { tone: "flag", label: "Past its due date" } : null)}
       minWidth="0"
       initialSorting={[{ id: "dueMs", desc: false }]}
       caption="Charges raised"

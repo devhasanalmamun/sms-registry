@@ -1,35 +1,43 @@
 import type { Metadata } from "next";
-import { Spectral, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Archivo, Public_Sans, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { cn } from "@/lib/utils";
 
 /*
- * Three faces, three jobs:
- *   Spectral   — headings. A screen-first serif with a documentary register.
- *   Plex Sans  — interface text.
- *   Plex Mono  — anything read off the screen and typed into another system:
- *                student IDs, payment references, amounts, dates.
+ * Three faces, three jobs.
+ *
+ * The reference is the printed student register — the continuous-stationery
+ * marksheets and fee ledgers university registries ran off line printers well
+ * into this century, and the official forms that surround them. Not a book, and
+ * not a magazine: a working document.
+ *
+ *   Archivo      — headings and the masthead, run wide and heavy. A grotesque
+ *                  with the flat authority of signage and form headers, which is
+ *                  what a register heading is. Never set as body copy.
+ *   Public Sans  — interface text. Drawn for US federal government forms, so it
+ *                  is legible at small sizes and has no personality to impose.
+ *   Spline Mono  — everything read off the screen and typed into another system:
+ *                  student IDs, payment references, amounts, dates. Also the
+ *                  column headings, because those label a printed column.
  */
 
-const spectral = Spectral({
-  variable: "--font-spectral",
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  axes: ["wdth"],
   display: "swap",
 });
 
-const plexSans = IBM_Plex_Sans({
-  variable: "--font-plex-sans",
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
+const splineMono = Spline_Sans_Mono({
+  variable: "--font-spline-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -49,9 +57,9 @@ export default function RootLayout({
       lang="en-GB"
       className={cn(
         "h-full font-sans",
-        spectral.variable,
-        plexSans.variable,
-        plexMono.variable,
+        archivo.variable,
+        publicSans.variable,
+        splineMono.variable,
       )}
     >
       <body className="min-h-full">
