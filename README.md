@@ -276,10 +276,11 @@ column, and nothing else** — not page eyebrows, not field labels, not row
 counts. A field label is sentence case and quiet, because a label's job is to
 get out of the way.
 
-**Orientation** is treated as a feature, not a nicety. The role selector sits
-above the navigation, because it decides what the navigation contains — in the
-footer, where it started, the one control that explains the whole screen was the
-last thing anybody found. Every nav entry carries its description, not just the
+**Orientation** is treated as a feature, not a nicety. The role selector sits at
+the foot of the margin, under a rule, where a form puts its signature block — and
+because the margin is sticky and the selector pinned to its bottom edge, it is on
+screen at every scroll position rather than only at the top of a long list. Every
+nav entry carries its description, not just the
 active one. Detail screens open with a route back. And where the domain has a
 distinction a reader cannot guess — "owing" is not "in arrears" — the screen
 says so next to the figures rather than assuming it.
@@ -349,7 +350,7 @@ assisted with some boilerplate".
 - **My first attempt to fix it was a repaint, and the user said so.** New palette,
   new typefaces, same page architecture — so it still read as the same screen. The
   second pass changed the structure: cards became ruled sections of one sheet, the
-  role selector moved above the navigation it governs, coloured margin marks became
+  role selector was pinned where it stays reachable, coloured margin marks became
   a named Attention column, and every black fill came out. Worth recording because
   the failure mode is specific: I had treated "make it look different" as the task
   when the task was "make it read better".

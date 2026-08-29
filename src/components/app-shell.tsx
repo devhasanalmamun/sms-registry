@@ -8,9 +8,10 @@ import { RoleSwitcher } from "@/components/role-switcher";
 /**
  * The shell.
  *
- * The role selector sits at the top, above the navigation, because it decides
- * what the navigation *is*. Putting it in a footer — where it was — meant the
- * one control that explains the whole screen was the last thing anybody found.
+ * The role selector sits at the foot of the margin, under a rule, the way the
+ * signature block sits at the foot of a form. It decides what the navigation
+ * contains, so it stays visible at all times — the margin is sticky and the
+ * selector is pinned to its bottom edge, never scrolled away with the list.
  *
  * Which links appear is decided here on the server from the acting role, so a
  * student never receives the markup for the staff sections at all.
@@ -59,14 +60,6 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
-        <RoleSwitcher
-          value={
-            session.role === "staff" ? "staff" : `student:${session.studentId}`
-          }
-          students={students}
-          actingFirstName={acting?.fullName.split(" ")[0]}
-        />
-
         {/* min-h-0 so this is what scrolls if the margin outgrows the viewport. */}
         <nav className="min-h-0 flex-1 overflow-y-auto py-3" aria-label="Sections">
           <p className="colhead px-4 pb-1.5 text-dim">
@@ -80,6 +73,15 @@ export async function AppShell({ children }: { children: ReactNode }) {
             ))}
           </ul>
         </nav>
+
+        {/* mt-auto keeps it on the bottom edge even when the nav is short. */}
+        <RoleSwitcher
+          value={
+            session.role === "staff" ? "staff" : `student:${session.studentId}`
+          }
+          students={students}
+          actingFirstName={acting?.fullName.split(" ")[0]}
+        />
       </aside>
 
       <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 lg:px-10 lg:py-10">

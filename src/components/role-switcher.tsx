@@ -34,11 +34,12 @@ function SwitchButton() {
 /**
  * Who you are reading the register as.
  *
- * This stands in for signing in, and it sits above the navigation because it
- * decides what the navigation contains. The line underneath says what the
- * choice actually does, because "role toggle" in a demo usually means the same
- * page with things hidden, and here it does not: a student's view never fetches
- * a withheld mark in the first place.
+ * This stands in for signing in. It sits at the foot of the margin, under a
+ * rule and pinned to the bottom edge, so it is always on screen without
+ * standing between the reader and the navigation. The line underneath says what
+ * the choice actually does, because "role toggle" in a demo usually means the
+ * same page with things hidden, and here it does not: a student's view never
+ * fetches a withheld mark in the first place.
  */
 export function RoleSwitcher({
   value,
@@ -52,7 +53,7 @@ export function RoleSwitcher({
   return (
     <form
       action={switchRole}
-      className="border-b border-rule-hard bg-card px-4 py-3.5"
+      className="mt-auto border-t border-rule-hard bg-card px-4 py-3.5"
     >
       <Label htmlFor="role" className="text-xs font-semibold text-graphite">
         You are viewing this as
