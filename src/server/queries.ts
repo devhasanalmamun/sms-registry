@@ -24,8 +24,6 @@ export type StudentFilters = {
   search?: string;
   programmeId?: string;
   status?: EnrolmentStatus | "ALL";
-  /** Restrict to accounts that are actually in arrears. */
-  overdueOnly?: boolean;
 };
 
 export type StudentRow = {
@@ -74,7 +72,7 @@ export async function listStudents(
     orderBy: { studentId: "asc" },
   });
 
-  const rows = students.map((s) => ({
+  return students.map((s) => ({
     id: s.id,
     studentId: s.studentId,
     fullName: s.fullName,
@@ -84,8 +82,6 @@ export async function listStudents(
     programme: s.programme,
     fees: summariseFees(s.charges, s.payments),
   }));
-
-  return filters.overdueOnly ? rows.filter((r) => r.fees.isOverdue) : rows;
 }
 
 /**

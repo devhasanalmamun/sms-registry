@@ -25,7 +25,6 @@ export type StudentRow = {
   status: EnrolmentStatus;
   balance: number;
   isOverdue: boolean;
-  inCredit: boolean;
 };
 
 const columns: ColumnDef<StudentRow, unknown>[] = [
@@ -97,16 +96,14 @@ const columns: ColumnDef<StudentRow, unknown>[] = [
 
 export function StudentsTable({ rows }: { rows: StudentRow[] }) {
   return (
+    // No Attention column. The register answers "who is on this programme, and
+    // what standing are they in" — money is the fees ledger's question, and it
+    // is asked there and on the dashboard. An overdue balance still prints in
+    // oxblood, which is the flag the brief asks for without a second column
+    // repeating the number beside itself.
     <DataTable
       columns={columns}
       data={rows}
-      mark={(r) =>
-        r.isOverdue
-          ? { tone: "flag", label: "In arrears" }
-          : r.inCredit
-            ? { tone: "watch", label: "In credit" }
-            : null
-      }
       caption="Students on the register"
     />
   );

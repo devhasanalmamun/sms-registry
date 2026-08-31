@@ -46,10 +46,9 @@ export default async function StudentsPage({
     typeof params.status === "string" && STATUSES.includes(params.status as EnrolmentStatus)
       ? (params.status as EnrolmentStatus | "ALL")
       : "ALL";
-  const overdueOnly = params.arrears === "1";
 
   const [students, programmes] = await Promise.all([
-    listStudents({ search, programmeId, status, overdueOnly }),
+    listStudents({ search, programmeId, status }),
     listProgrammes(),
   ]);
 
@@ -65,10 +64,9 @@ export default async function StudentsPage({
     status: s.status,
     balance: Number(s.fees.balance.toFixed(2)),
     isOverdue: s.fees.isOverdue,
-    inCredit: s.fees.inCredit,
   }));
 
-  const filtered = Boolean(search || programmeId || status !== "ALL" || overdueOnly);
+  const filtered = Boolean(search || programmeId || status !== "ALL");
 
   return (
     <>
@@ -87,7 +85,6 @@ export default async function StudentsPage({
           search={search}
           programmeId={programmeId}
           status={status}
-          overdueOnly={overdueOnly}
           filtered={filtered}
           programmes={programmes.map((p) => ({
             value: p.id,

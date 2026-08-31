@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Field, LinkButton, type Option, SelectField } from "@/components/registry";
 
 /**
@@ -17,7 +15,6 @@ export function StudentFilters({
   search,
   programmeId,
   status,
-  overdueOnly,
   programmes,
   statuses,
   filtered,
@@ -25,7 +22,6 @@ export function StudentFilters({
   search: string;
   programmeId: string;
   status: string;
-  overdueOnly: boolean;
   programmes: Option[];
   statuses: Option[];
   filtered: boolean;
@@ -33,7 +29,7 @@ export function StudentFilters({
   return (
     <form
       method="get"
-      className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]"
+      className="grid items-start gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]"
     >
       <Field label="Search" htmlFor="q" hint="Name, student ID, email or programme">
         <Input
@@ -62,24 +58,27 @@ export function StudentFilters({
         />
       </Field>
 
-      <div className="flex items-end gap-2">
-        <Button type="submit" variant="default">
+      {/*
+       * The buttons sit on the inputs' line, not below them. Bottom-aligning
+       * them instead drops them a hint's height under the Search box, which
+       * reads as a second row of controls. The blank label reserves the same
+       * strip the field labels occupy, so everything starts level.
+       */}
+      <div className="flex flex-col gap-1.5">
+        <span aria-hidden className="invisible text-[0.8125rem] font-medium">
           Apply
-        </Button>
-        {filtered ? (
-          <LinkButton variant="ghost" href="/students">
-            Clear
-          </LinkButton>
-        ) : null}
-      </div>
-
-      <Label className="gap-2 text-sm font-normal text-graphite sm:col-span-2 lg:col-span-4">
-        <Checkbox name="arrears" value="1" defaultChecked={overdueOnly} />
-        Only students in arrears
-        <span className="text-xs text-muted-foreground">
-          (a charge past its due date, not simply a balance owing)
         </span>
-      </Label>
+        <div className="flex gap-2">
+          <Button type="submit" variant="default">
+            Apply
+          </Button>
+          {filtered ? (
+            <LinkButton variant="ghost" href="/students">
+              Clear
+            </LinkButton>
+          ) : null}
+        </div>
+      </div>
     </form>
   );
 }
