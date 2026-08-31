@@ -97,7 +97,7 @@ export default async function MyFeesPage() {
         </Panel>
 
         <Panel>
-          <PanelHeader title="What you have paid" hint="Keep the reference for your records." />
+          <PanelHeader title="What you have paid" />
           {detail.payments.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">
               No payment has been received yet.
