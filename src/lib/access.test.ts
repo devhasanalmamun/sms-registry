@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { canReadSubmission, isInCohort, ownsAssessment } from "@/lib/access";
+import {
+  canReadSubmission,
+  cohortWhere,
+  isInCohort,
+  ownsAssessment,
+} from "@/lib/access";
 import type { Session } from "@/lib/session";
 
 /**
@@ -69,5 +74,18 @@ describe("canReadSubmission", () => {
     // Registry can see a student's record and their ledger. Coursework is not
     // part of either.
     expect(canReadSubmission(registry, amarasWork)).toBe(false);
+  });
+});
+
+describe("the cohort, as one definition", () => {
+  it("excludes withdrawn students, not just other programmes", () => {
+    // Regression: `saveGrade` filtered on programme alone while the marking
+    // sheet filtered on programme *and* status, so a withdrawn student could be
+    // given a mark that showed on no marking sheet and on their own marksheet.
+    const where = cohortWhere("bsc");
+
+    expect(where.programmeId).toBe("bsc");
+    expect(where.status.in).toEqual(["ENROLLED", "DEFERRED", "COMPLETED"]);
+    expect(where.status.in).not.toContain("WITHDRAWN");
   });
 });

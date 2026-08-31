@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import type { EnrolmentStatus } from "@/generated/prisma/enums";
 import { summariseFees, type FeeSummary } from "@/lib/fees";
 import { classify } from "@/lib/grading";
+import { ACTIVE_STATUSES, cohortWhere } from "@/lib/access";
 
 /**
  * The read model.
@@ -18,9 +19,6 @@ import { classify } from "@/lib/grading";
  *     lecturer's marking sheet lists the students the work was set for, and
  *     nobody else.
  */
-
-/** Statuses that are expected to submit work. Withdrawn students are not. */
-const ACTIVE_STATUSES = ["ENROLLED", "DEFERRED", "COMPLETED"] as const;
 
 export type StudentFilters = {
   search?: string;
@@ -252,10 +250,7 @@ export async function getAssessmentDetail(id: string, staffId: string | null) {
     // The cohort, not the institution: only students on this assessment's
     // programme were ever set this work.
     prisma.student.findMany({
-      where: {
-        programmeId: assessment.programmeId,
-        status: { in: [...ACTIVE_STATUSES] },
-      },
+      where: cohortWhere(assessment.programmeId),
       include: { programme: { select: { code: true } } },
       orderBy: { studentId: "asc" },
     }),

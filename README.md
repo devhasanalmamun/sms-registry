@@ -47,7 +47,7 @@ Docker the sequence above works with no edits at all.
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm test` | 61 unit tests (Vitest) over the fee, submission, date, grading and access rules |
+| `npm test` | 62 unit tests (Vitest) over the fee, submission, date, grading and access rules |
 | `npm run db:reset` | Drops, re-migrates and re-seeds — the fastest way back to a clean demo |
 | `npm run db:studio` | Prisma Studio, to inspect the data directly |
 
@@ -453,6 +453,14 @@ assisted with some boilerplate".
   before moderation" — straight onto the student's screen, because there is one
   `feedback` field and publishing shows it verbatim. The seed text was wrong for
   a student-facing field; I would not have noticed by reading the code.
+- **Asked "so all fixes, no bugs?", I went and looked — and found one.** The
+  marking sheet defined the cohort as programme *and* active status; `saveGrade`
+  defined it as programme alone. A withdrawn student could therefore be given a
+  mark that appeared on no marking sheet and on their own marksheet — the exact
+  ghost the guard's comment claimed to prevent. Two definitions of one rule, in
+  code I had written twenty minutes earlier and reviewed. It now lives once, in
+  `src/lib/access.ts`, with a regression test. The test is also what moved it:
+  the rule had been sitting behind `server-only`, where nothing could test it.
 - **The interesting product decisions were mine.** Deriving the balance rather
   than storing it; separating "owing" from "in arrears"; re-marking
   un-publishing; showing students "not yet released" instead of nothing;

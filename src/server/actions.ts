@@ -8,6 +8,7 @@ import { requireRegistry, requireStaff } from "@/lib/session";
 import { allocateStudentId } from "@/lib/student-id";
 import { parseMoney } from "@/lib/money";
 import { summariseFees } from "@/lib/fees";
+import { cohortWhere } from "@/lib/access";
 import { addMonthsDateOnly, dateOnlyToUtc, wallClockToInstant } from "@/lib/time";
 import {
   assessmentSchema,
@@ -352,15 +353,18 @@ export async function saveGrade(
 
   // A mark for a student who was never set this work would be invisible on the
   // marking sheet (which lists the cohort) but perfectly visible on the
-  // student's own marksheet. Reject it here rather than create that ghost.
+  // student's own marksheet. Reject it here rather than create that ghost —
+  // using the marking sheet's own definition of the cohort, so the two cannot
+  // drift apart again.
   const inCohort = await prisma.student.findFirst({
-    where: { id: studentId, programmeId: assessment.programmeId },
+    where: { id: studentId, ...cohortWhere(assessment.programmeId) },
     select: { id: true },
   });
   if (!inCohort) {
     return {
       ok: false,
-      message: "That student is not in the cohort this assessment was set for.",
+      message:
+        "That student is not in the cohort this assessment was set for, or is no longer enrolled.",
     };
   }
 
