@@ -4,7 +4,7 @@ import { getAssessmentDetail } from "@/server/queries";
 import { publishAllResults } from "@/server/actions";
 import { averageScore } from "@/lib/grading";
 import { formatBytes, formatDateTime, relativeToNow } from "@/lib/format";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { Figure, Footing, PageHeader, Panel, PanelHeader } from "@/components/registry";
 import { MarksheetTable } from "@/components/tables/marksheet-table";
 
@@ -103,9 +103,13 @@ export default async function AssessmentPage({
             withheld.length > 0 ? (
               <form action={publishAllResults}>
                 <input type="hidden" name="assessmentId" value={assessment.id} />
-                <Button type="submit" variant="default" size="sm">
+                <SubmitButton
+                  variant="default"
+                  size="sm"
+                  pendingLabel="Publishing…"
+                >
                   Publish all {withheld.length} withheld
-                </Button>
+                </SubmitButton>
               </form>
             ) : null
           }

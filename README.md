@@ -367,6 +367,16 @@ active one. Detail screens open with a route back. And where the domain has a
 distinction a reader cannot guess — "owing" is not "in arrears" — the screen
 says so next to the figures rather than assuming it.
 
+Nothing in the app reloads the document. Switching role, saving a mark and
+releasing a result are all Server Actions, and navigation is client-side — but
+every route is dynamic with no `loading.tsx`, so a click holds the previous
+screen for the length of a database round trip. Without feedback that reads as a
+freeze followed by a reload, so every action says it is working: submit buttons
+disable and change label through `useFormStatus`, and nav links show a pending
+rule through `useLinkStatus`. Verified by sampling the DOM during the action
+rather than by watching it, since on a warm dev server the round trip is often
+under 150 ms and the state is easy to miss.
+
 Every table is **TanStack Table** driving the shadcn `Table` primitives — the
 shadcn data-table pattern. `src/components/data-table.tsx` is the shared shell
 and each file in `src/components/tables/` is one set of column definitions.

@@ -1,8 +1,30 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+/**
+ * Navigation feedback.
+ *
+ * Every route here is dynamic and there is no `loading.tsx`, so a click holds
+ * the old page on screen while the server works — around a second against a
+ * real database. With no indication that anything is happening, the screen sits
+ * still and then changes all at once, which reads as the page having reloaded.
+ *
+ * `useLinkStatus` reports the pending state of the enclosing Link, which is why
+ * this is a child component rather than a class on the anchor.
+ */
+function LoadingRule() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span
+      aria-hidden
+      className="absolute inset-y-0 left-[-3px] w-[3px] animate-pulse bg-stamp"
+    />
+  );
+}
 
 /**
  * An entry in the index margin.
@@ -33,7 +55,7 @@ export function NavLink({
       href={href}
       aria-current={isActive(pathname, href, siblings) ? "page" : undefined}
       className={cn(
-        "block border-l-[3px] py-2 pl-3 pr-4 transition-colors",
+        "relative block border-l-[3px] py-2 pl-3 pr-4 transition-colors",
         isActive(pathname, href, siblings)
           ? "border-stamp bg-card"
           : "border-transparent hover:border-rule-hard hover:bg-card/70",
@@ -52,6 +74,7 @@ export function NavLink({
       <span className="mt-0.5 block text-xs leading-snug text-graphite">
         {note}
       </span>
+      <LoadingRule />
     </Link>
   );
 }

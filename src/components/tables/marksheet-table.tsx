@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { DataTable, type ColumnDef } from "@/components/data-table";
 import { Code, Stamp } from "@/components/registry";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { MarksheetGradeForm } from "@/components/marksheet-row";
 import { classify } from "@/lib/grading";
 import { setResultPublished } from "@/server/actions";
@@ -143,14 +143,14 @@ export function MarksheetTable({
               ) : (
                 <Stamp tone="flag">Withheld</Stamp>
               )}
-              <Button
-                type="submit"
+              <SubmitButton
                 size="sm"
                 variant={published ? "destructive" : "default"}
                 className="block w-full"
+                pendingLabel={published ? "Withholding…" : "Publishing…"}
               >
                 {published ? "Withhold" : "Publish"}
-              </Button>
+              </SubmitButton>
             </form>
           );
         },
