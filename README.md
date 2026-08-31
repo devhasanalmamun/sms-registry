@@ -1,16 +1,16 @@
 # Registry — Student Management System
 
-The Registry module: **enrolment**, **fees and payments**, **assessment
-submission**, and **marksheet and results** — split across the three people who
-actually do them. Enrolment and money belong to the **Registry office**;
-assessments, marking and releasing results belong to **teaching staff**; the
-**student** sees their own record. A registrar cannot release a mark and a
-lecturer cannot see the ledger.
+The four jobs the brief asks for — **signing students up**, **fees and
+payments**, **handing work in**, and **marks and results** — given to the three
+people who actually do them. The **office** signs students up and handles money.
+**Teachers** set work, mark it, and decide when a student sees the result. Each
+**student** sees only their own record. The office cannot release a mark, and a
+teacher cannot see the money.
 
 **Next.js (App Router) · PostgreSQL · Prisma · Tailwind + shadcn/ui · TanStack Table · Vitest**
 
-The reasoning behind every decision below — and the honest account of what I got
-wrong — is in **[NOTES.md](NOTES.md)**.
+Why each decision was made — and what I got wrong along the way — is in
+**[NOTES.md](NOTES.md)**.
 
 ---
 
@@ -42,9 +42,9 @@ demo), `npm run db:studio`.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string. Read by Prisma via `prisma.config.ts` and passed to the client through the `@prisma/adapter-pg` driver adapter. |
-| `UPLOAD_DIR` | No | `uploads` | Where submitted files are written, relative to the repo root. Gitignored. |
-| `MAX_UPLOAD_BYTES` | No | `10485760` (10 MB) | Rejection threshold for uploads. |
+| `DATABASE_URL` | Yes | — | Where your PostgreSQL database is. The only thing you have to set. |
+| `UPLOAD_DIR` | No | `uploads` | Folder for files students hand in. Not committed to git. |
+| `MAX_UPLOAD_BYTES` | No | `10485760` (10 MB) | Largest file accepted. |
 
 No credentials are committed: `.env` is gitignored, `.env.example` is the file
 to copy.
@@ -53,128 +53,106 @@ to copy.
 
 ## Trying it out
 
-There is no login. The sidebar has a **You are viewing this as** switcher —
-Registry office, any member of teaching staff, or any student. The choice is an
-httpOnly cookie read **server-side**, so switching role does not hide the other
-role's data, it stops fetching it.
+There is no login. The sidebar has a **You are viewing this as** switcher — the
+office, any teacher, or any student. The app checks who you are on the server,
+so switching does not just hide the other person's data, it never loads it.
 
-The seed plants one of every edge case. A five-minute tour:
+The demo data has one example of every tricky case. A five-minute tour:
 
-1. **Today** (as Registry) — the desk leads with arrears, not headcount. There
-   is no marking queue here: Registry cannot act on one.
-2. As **Dr Priya Raman** → **Coursework 1**. The sheet lists the five active BSc
-   students the work was set for, including the two who submitted nothing.
-   Saving a mark does not release it. Marks save on tab, not on a button.
-3. As **Hassan Ali** — his withheld 34 is nowhere on the page and nowhere in the
-   HTML. He sees "handed in, not yet released" rather than silence. The MSc
-   essay is absent entirely: it was never set for him.
-4. Publish it as Dr Raman, switch back, and it appears.
-5. As **Dr Martin Cole**, open Coursework 1's URL directly — 404. He did not set
-   it, so its marks are never loaded. Same for the file route.
+1. **Today** (as the office) — it opens with who owes money and is late paying,
+   not with a headcount. There is no marking to do here: the office cannot mark.
+2. As **Dr Priya Raman** → **Coursework 1**. You see all five students the work
+   was set for, including the two who handed in nothing. Typing a mark saves it
+   when you tab out, but does not show it to the student yet.
+3. As **Hassan Ali** — his held-back 34 is nowhere on the page, and not in the
+   page source either. He is told his work was received but not marked yet,
+   which beats silence. The MSc essay is not listed at all: it was never his.
+4. Go back to Dr Raman, release the mark, return to Hassan. Now it is there.
+5. As **Dr Martin Cole**, open Coursework 1's link directly — page not found. He
+   did not set it, so its marks are never loaded. Same for the file download.
 6. As a student, **My work** → upload a PDF, upload again (it replaces the
-   first), try a closed assessment (refused).
+   first), then try one whose deadline has passed (refused).
 
-Others worth a look: **Ben Whitfield** (part payment → in arrears, plus late
-work), **Elena Kovac** (sponsor overpaid → in credit, not a negative debt),
-**Farhan Iqbal** (withdrawn but still owing), **Grace Lin** (completed and
-settled).
+Others worth a look: **Ben Whitfield** (paid part of a late bill, and handed
+work in late), **Elena Kovac** (overpaid, so she is in credit rather than in
+debt), **Farhan Iqbal** (left the course but still owes money), **Grace Lin**
+(finished, paid up, results out).
 
 ---
 
 ## The decisions that matter
 
-- **A balance is derived, never stored** — `sum(charges) − sum(payments)`. A
-  stored balance is a cache, and caches drift.
-- **"Owing" and "in arrears" are different questions.** Everyone owes something
-  for most of the year. Overdue means a balance *and* a charge past its due
-  date. Payments apply oldest-first, as a bursary office allocates them.
-- **Three roles, because there are three jobs.** The brief's modules 1–2 say
-  *the Registry team*; 3–4 say *staff*. Enforced in three places: page guards,
-  Server Actions, and SQL filters — a Server Action is a public endpoint, so
-  knowing an id must be worth nothing.
-- **An assessment is set for a cohort**, not the institution: it carries a
-  programme and an owner. "You did not submit" and "this was never set for you"
-  look identical on screen and mean different things.
-- **Withheld results are not fetched, not hidden.** The query filters
-  `published: true`, so an unpublished mark never enters the process. File reads
-  return **404, not 403**, so the response cannot confirm someone else's file.
-- **Re-marking un-publishes.** Someone has to decide, deliberately, that the
-  student should see the new number.
-- **Late work is accepted and flagged, not refused** — the board needs the work
-  *and* the fact it was late. `isLate` is stamped at write time, so moving a
-  deadline cannot retroactively forgive anyone.
-- **Uploads are checked by content**: extension and magic bytes must agree, and
-  stored names are ours, not the client's.
-- **Student IDs come from a counter table**, allocated under a row lock —
-  `MAX(id) + 1` races, and reuses a number that may be printed on a card.
-- **A deadline is a time on the institution's clock**, pinned explicitly, because
-  a naive `datetime-local` string is read in the *server's* zone.
-- **Money is `Decimal(10,2)`, never a float.** There is a test for it.
+- **The balance is always added up, never saved.** Bills minus payments, every
+  time. A saved total is a copy, and copies go out of date.
+- **Owing money is not the same as being late.** Nearly everyone owes something
+  during the year — that is how instalments work. A student is only flagged when
+  a bill has actually passed its due date. Payments clear the oldest bill first,
+  the way a finance office does it.
+- **Three roles, because there are three jobs.** The office handles students and
+  money, teachers handle work and marks, students see their own record. It is
+  enforced on the server three times over, so guessing a web address gets you
+  nothing.
+- **Work is set for one class, not the whole school.** Each assessment belongs
+  to a course and to the teacher who set it. "You did not hand this in" and
+  "this was never yours to do" look the same on screen and mean very different
+  things.
+- **A held-back mark is never sent to the browser.** It is filtered out in the
+  database, not hidden with CSS. Asking for someone else's file gives "not
+  found" rather than "not allowed", so you cannot even confirm it exists.
+- **Changing a mark hides it again.** Someone has to decide, on purpose, that
+  the student should see the new number.
+- **Late work is accepted and flagged, not refused.** The school needs the work
+  *and* the fact it was late. It is stamped at the time, so moving a deadline
+  later cannot quietly let someone off.
+- **Uploaded files are checked by what is inside them**, not by their name. An
+  `.exe` renamed `.pdf` is rejected.
+- **Student numbers come from a counter**, so two people enrolling at once can
+  never get the same one, and a number is never handed out twice.
+- **A deadline is a time on the school's clock**, fixed explicitly — otherwise a
+  5pm deadline becomes 11am on a server in another country.
+- **Money is stored as exact decimals, never as floating point.** There is a
+  test for it: computers get `0.1 + 0.1 + 0.1` wrong, and the fee records have to
+  match the bank to the penny.
 
-The rules live in `src/lib` as plain functions with no database or React in
-them, so they are unit-tested without a running Postgres, and Server Actions and
-API routes call the *same* function — there is one implementation of "is this
-late", not two that can drift.
+The rules live in `src/lib` as plain functions, so they can be tested on their
+own, and every part of the app calls the same one — there is one answer to "is
+this late", not two that can disagree.
 
 ---
 
 ## How I used AI
 
-I built this with **Claude Code (Opus)** in an agentic loop: I set the direction
-and made the product decisions, the model wrote most of the code, and I reviewed
-what went in. That is the honest description, not "AI assisted with boilerplate".
+I used **Claude Code (Opus)**. It wrote most of the code; I decided what to
+build, and I checked everything before it went in.
 
-**It did the heavy lifting** on scaffolding, the first draft of the schema, the
-seed script (eight students each demonstrating a different edge case is exactly
-the fiddly high-volume work worth delegating), repetitive page structure, and
-tests written from behaviour I described.
+**Good at:** setup, the first draft of the database, the demo data, repeated
+pages, and tests once I described the rule I wanted held.
 
-**Where it was wrong, and I had to steer:**
+**Got wrong, and I had to catch it:**
 
-- **Version skew, twice.** `prisma@latest` pulled an 8.0 RC against a 7.x
-  client; `@tanstack/react-table@latest` pulled v9, whose API the shadcn pattern
-  is not written against. Pin the major and check what actually installed.
-- **Prisma 7 needs a driver adapter** and no longer takes `url` in the
-  datasource. The first attempt used the v5 shape — a model's training data lags
-  a major release, so I read the current docs.
-- **I read "Staff view" and modelled one role where there are two.** Registry
-  ended up setting assessments and releasing marks. The brief had told me
-  otherwise and I read past it; the fix was a new table, a three-state session,
-  and every guard, query and action re-cut.
-- **I invented the wrong grading scheme** — the UK honours ladder instead of the
-  Pass/Merit/Distinction thresholds the brief states. A confident default in
-  place of a stated requirement.
-- **The first design was, in the reviewer's words, "AI slop"** — and it was. My
-  first fix was a repaint of the same page architecture, which changed nothing.
-  The second changed the structure.
-- **An automated review found two real holes in code I had written and read**:
-  the download route echoed the uploader's own `Content-Type` (stored XSS), and
-  the uploader's filename reached a header where a quote could break out of it.
-  Both fixed, both re-attacked against the running app to confirm.
-- **Asked "so all fixes, no bugs?", I looked and found one.** The cohort rule
-  was defined twice and the two disagreed, so a withdrawn student could be given
-  a mark that appeared on no marking sheet. It now lives once, with a regression
-  test.
+- It installed the wrong major version of two libraries, twice. Now pinned.
+- It gave every teacher and every office worker the same powers. The brief says
+  the office handles students and fees, and teachers handle marks. I had to
+  split it properly.
+- It made up its own grading bands instead of the ones in the brief.
+- The first design looked like every AI-made site. I rebuilt the layout, not
+  just the colours.
+- It left two security holes in the file download, both found by a review pass
+  and fixed.
 
-**The product decisions were mine** — deriving the balance, separating owing
-from arrears, re-marking un-publishing, showing students "not yet released"
-instead of nothing, 404 rather than 403. Asked for "a fees page", a model gives
-you a `balance` column and a red badge on anyone above zero.
+**I tested by using the app,** not by trusting that it compiled: uploaded files,
+handed work in late, and tried to open another student's file to make sure I
+could not.
 
-**I verified rather than assumed:** drove the running app with Playwright and
-`curl`, uploaded a text file renamed `.pdf`, resubmitted either side of a
-deadline, downloaded another student's file, and grepped the rendered HTML for
-the withheld mark to confirm it is not there.
-
-Full account, including the bugs a deliberate hunting pass turned up, in
+The longer version, with every bug and why it happened, is in
 [NOTES.md](NOTES.md).
 
 ---
 
 ## What I would do next
 
-Real authentication (`src/lib/session.ts` is the only file that changes) · an
-audit trail of who published what · payments allocated explicitly to charges ·
-object storage for submissions · bulk mark entry and CSV export · a
-Registry-owned sanctions flag, since a lecturer should not be the one withholding
-a result over unpaid fees.
+Proper logins (one file changes) · a history of who did what, and when · letting
+the office point a payment at a specific bill · storing files in the cloud
+instead of on disk · entering lots of marks at once, and a CSV export · a hold
+the office can put on a record, so a teacher is never the one sitting on a mark
+because of an unpaid bill.
