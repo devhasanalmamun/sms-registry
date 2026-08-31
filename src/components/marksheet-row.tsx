@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Stamp } from "@/components/registry";
 import { IDLE } from "@/server/action-state";
@@ -68,27 +69,27 @@ function saveOnBlur(
   form.requestSubmit();
 }
 
-function SaveStatus({ error, saved }: { error?: string; saved: boolean }) {
+/**
+ * The mark box, which reports its own state.
+ *
+ * Status text under the input pushed the row taller the moment a save started
+ * and shorter again when it finished, so every save made the sheet jump. A save
+ * in flight is shown by fading the box instead: the reader gets the feedback and
+ * the table does not move. The row already reports the outcome anyway — the
+ * class and the released state both change.
+ */
+function ScoreInput(props: React.ComponentProps<typeof Input>) {
   const { pending } = useFormStatus();
-
-  if (pending) {
-    return <p className="mt-1 w-[7.5rem] whitespace-normal text-xs text-graphite">Saving…</p>;
-  }
-  if (error) {
-    return (
-      <p className="mt-1 w-[7.5rem] whitespace-normal text-xs text-destructive" role="alert">
-        {error}
-      </p>
-    );
-  }
-  if (saved) {
-    return (
-      <p className="mt-1 w-[7.5rem] whitespace-normal text-xs text-clear" role="status">
-        Saved — withheld until you publish
-      </p>
-    );
-  }
-  return null;
+  return (
+    <Input
+      {...props}
+      aria-busy={pending || undefined}
+      className={cn(
+        "w-16 text-right font-mono transition-opacity",
+        pending && "opacity-50",
+      )}
+    />
+  );
 }
 
 /** The Mark cell: owns the form that the feedback cell posts into. */
@@ -103,12 +104,14 @@ export function MarksheetGradeForm({
 }) {
   const [state, formAction] = useActionState(saveGrade, IDLE);
   const lastSaved = useRef(score === null ? "" : String(score));
+  const error =
+    state.errors?.score ?? (state.ok === false ? state.message : undefined);
 
   return (
     <form action={formAction} id={gradeFormId(studentId)}>
       <input type="hidden" name="assessmentId" value={assessmentId} />
       <input type="hidden" name="studentId" value={studentId} />
-      <Input
+      <ScoreInput
         name="score"
         type="number"
         min={0}
@@ -116,14 +119,15 @@ export function MarksheetGradeForm({
         step={1}
         defaultValue={score ?? ""}
         aria-label="Mark out of 100"
-        className="w-16 text-right font-mono"
         aria-invalid={Boolean(state.errors?.score)}
         onBlur={(event) => saveOnBlur(event, lastSaved)}
       />
-      <SaveStatus
-        error={state.errors?.score ?? (state.ok === false ? state.message : undefined)}
-        saved={state.ok === true}
-      />
+      {/* Only a failure gets words. It has to be read, so it may cost a line. */}
+      {error ? (
+        <p className="mt-1 w-[7.5rem] whitespace-normal text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

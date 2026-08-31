@@ -85,7 +85,15 @@ export default async function AssessmentPage({
             label="Late"
             tone={late.length > 0 ? "watch" : "neutral"}
           />
-          <Figure value={submitted.length - marked.length} label="Unmarked" />
+          {/*
+            * Submissions still to mark — not `submitted − marked`, which goes
+            * negative the moment a non-submission is given a mark, as recording
+            * a zero for someone who handed nothing in does.
+            */}
+          <Figure
+            value={submitted.filter((r) => !r.result).length}
+            label="Unmarked"
+          />
           <Figure
             value={withheld.length}
             label="Withheld"

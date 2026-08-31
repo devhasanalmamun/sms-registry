@@ -153,15 +153,27 @@ export function MarksheetTable({
             >
               <input type="hidden" name="resultId" value={resultId} />
               <input type="hidden" name="publish" value={String(!published)} />
+              {/*
+               * Both states are pinned to the same width. "Published" is wider
+               * than "Withheld" and "Withhold" wider than "Publish", so without
+               * this the badge and the button change size as you toggle and the
+               * whole column jumps sideways under the pointer. The pending label
+               * is short for the same reason.
+               */}
               {published ? (
-                <Stamp tone="clear">Published</Stamp>
+                <Stamp tone="clear" className="w-20 justify-center">
+                  Published
+                </Stamp>
               ) : (
-                <Stamp tone="flag">Withheld</Stamp>
+                <Stamp tone="flag" className="w-20 justify-center">
+                  Withheld
+                </Stamp>
               )}
               <SubmitButton
                 size="sm"
                 variant={published ? "destructive" : "default"}
-                pendingLabel={published ? "Withholding…" : "Publishing…"}
+                className="w-24"
+                pendingLabel="Saving…"
               >
                 {published ? "Withhold" : "Publish"}
               </SubmitButton>

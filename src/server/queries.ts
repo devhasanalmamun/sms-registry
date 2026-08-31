@@ -56,8 +56,12 @@ export async function listStudents(
               { fullName: { contains: search, mode: "insensitive" } },
               { studentId: { contains: search, mode: "insensitive" } },
               { email: { contains: search, mode: "insensitive" } },
-              { programme: { name: { contains: search, mode: "insensitive" } } },
-              { programme: { code: { contains: search, mode: "insensitive" } } },
+              {
+                programme: { name: { contains: search, mode: "insensitive" } },
+              },
+              {
+                programme: { code: { contains: search, mode: "insensitive" } },
+              },
             ],
           }
         : {}),
@@ -193,8 +197,8 @@ export async function listAssessmentsFor(staffId: string) {
     orderBy: { dueAt: "desc" },
     include: {
       programme: { select: { id: true, code: true, name: true } },
-      submissions: { select: { id: true, isLate: true } },
-      results: { select: { id: true, published: true } },
+      submissions: { select: { id: true, isLate: true, studentId: true } },
+      results: { select: { id: true, published: true, studentId: true } },
     },
   });
 
@@ -205,25 +209,33 @@ export async function listAssessmentsFor(staffId: string) {
     where: { status: { in: [...ACTIVE_STATUSES] } },
     _count: { _all: true },
   });
-  const cohortSize = new Map(cohorts.map((c) => [c.programmeId, c._count._all]));
+  const cohortSize = new Map(
+    cohorts.map((c) => [c.programmeId, c._count._all]),
+  );
 
   const now = Date.now();
 
-  return assessments.map((a) => ({
-    ...a,
-    closed: a.dueAt.getTime() < now,
-    counts: {
-      // Same cohort rule as the marking sheet, so "4 of 6" here and the rows
-      // there cannot disagree.
-      expected: cohortSize.get(a.programmeId) ?? 0,
-      submitted: a.submissions.length,
-      late: a.submissions.filter((s) => s.isLate).length,
-      marked: a.results.length,
-      published: a.results.filter((r) => r.published).length,
-      awaitingMark: a.submissions.length - a.results.length,
-      withheld: a.results.filter((r) => !r.published).length,
-    },
-  }));
+  return assessments.map((a) => {
+    const marked = new Set(a.results.map((r) => r.studentId));
+    return {
+      ...a,
+      closed: a.dueAt.getTime() < now,
+      counts: {
+        // Same cohort rule as the marking sheet, so "4 of 6" here and the rows
+        // there cannot disagree.
+        expected: cohortSize.get(a.programmeId) ?? 0,
+        submitted: a.submissions.length,
+        late: a.submissions.filter((s) => s.isLate).length,
+        marked: a.results.length,
+        published: a.results.filter((r) => r.published).length,
+        // Submissions with no mark yet. Subtracting one count from the other
+        // goes negative as soon as someone who did not submit is given a mark.
+        awaitingMark: a.submissions.filter((s) => !marked.has(s.studentId))
+          .length,
+        withheld: a.results.filter((r) => !r.published).length,
+      },
+    };
+  });
 }
 
 /**
@@ -304,7 +316,9 @@ export async function getRegistryOverview() {
 
   const overdue = withFees
     .filter((s) => s.fees.isOverdue)
-    .sort((a, b) => Number(b.fees.overdueAmount) - Number(a.fees.overdueAmount));
+    .sort(
+      (a, b) => Number(b.fees.overdueAmount) - Number(a.fees.overdueAmount),
+    );
 
   return {
     counts: {
