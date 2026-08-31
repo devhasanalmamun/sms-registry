@@ -17,9 +17,14 @@ import { RoleSwitcher } from "@/components/role-switcher";
  * student never receives the markup for the teaching sections at all.
  */
 
+/**
+ * The masthead names the area you are in, not the office that happens to own
+ * the largest module. "Registry" over a lecturer's assessment list is simply
+ * the wrong department, and the sub-line carries the system's name for everyone.
+ */
 const nav = {
   registry: {
-    label: "Registry office",
+    label: "Registry",
     items: [
       { href: "/", label: "Today", note: "What needs doing right now" },
       { href: "/students", label: "Students", note: "Find and enrol students" },
@@ -42,7 +47,7 @@ const nav = {
     ],
   },
   student: {
-    label: "Your record",
+    label: "My record",
     items: [
       { href: "/me", label: "My results", note: "Marks released to you" },
       {
@@ -95,15 +100,16 @@ export async function AppShell({ children }: { children: ReactNode }) {
           href={homeFor[session.role]}
           className="block border-b border-rule-hard px-4 py-4"
         >
-          <span className="masthead block text-xl text-foreground">Registry</span>
+          <span className="masthead block text-xl text-foreground">
+            {section.label}
+          </span>
           <span className="mt-0.5 block text-xs text-graphite">
             Student Management System
           </span>
         </Link>
 
         {/* min-h-0 so this is what scrolls if the margin outgrows the viewport. */}
-        <nav className="min-h-0 flex-1 overflow-y-auto py-3" aria-label="Sections">
-          <p className="colhead px-4 pb-1.5 text-dim">{section.label}</p>
+        <nav className="min-h-0 flex-1 overflow-y-auto py-3" aria-label={section.label}>
           <ul>
             {section.items.map((item) => (
               <li key={item.href}>

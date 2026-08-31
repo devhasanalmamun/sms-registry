@@ -41,10 +41,12 @@ const splineMono = Spline_Sans_Mono({
   display: "swap",
 });
 
+// Named for the system, not for one of the three offices that use it — a
+// lecturer's browser tab has no business reading "Registry".
 export const metadata: Metadata = {
-  title: "Registry — Student Management System",
+  title: "Student Management System",
   description:
-    "Enrolment, fees, submissions and results for the Registry office.",
+    "Enrolment and fees for the Registry office, assessments and results for teaching staff, and the student's own record.",
 };
 
 export default function RootLayout({
