@@ -68,15 +68,7 @@ function saveOnBlur(
   form.requestSubmit();
 }
 
-function SaveStatus({
-  error,
-  hint,
-  saved,
-}: {
-  error?: string;
-  hint?: string;
-  saved: boolean;
-}) {
+function SaveStatus({ error, saved }: { error?: string; saved: boolean }) {
   const { pending } = useFormStatus();
 
   if (pending) {
@@ -96,9 +88,6 @@ function SaveStatus({
       </p>
     );
   }
-  if (hint) {
-    return <p className="mt-1 w-[7.5rem] whitespace-normal text-xs text-muted-foreground">{hint}</p>;
-  }
   return null;
 }
 
@@ -107,12 +96,10 @@ export function MarksheetGradeForm({
   assessmentId,
   studentId,
   score,
-  hasSubmission,
 }: {
   assessmentId: string;
   studentId: string;
   score: number | null;
-  hasSubmission: boolean;
 }) {
   const [state, formAction] = useActionState(saveGrade, IDLE);
   const lastSaved = useRef(score === null ? "" : String(score));
@@ -136,11 +123,6 @@ export function MarksheetGradeForm({
       <SaveStatus
         error={state.errors?.score ?? (state.ok === false ? state.message : undefined)}
         saved={state.ok === true}
-        hint={
-          !hasSubmission && score === null
-            ? "Nothing submitted. A mark here records a non-submission."
-            : undefined
-        }
       />
     </form>
   );

@@ -108,7 +108,6 @@ export function MarksheetTable({
             assessmentId={assessmentId}
             studentId={row.original.studentId}
             score={row.original.score}
-            hasSubmission={Boolean(row.original.submission)}
           />
         ),
       },
