@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/db";
-import { getActingStudent, getSession } from "@/lib/session";
+import { getActingStaff, getActingStudent, getSession } from "@/lib/session";
 import { NavLink } from "@/components/nav-link";
 import { RoleSwitcher } from "@/components/role-switcher";
 
@@ -14,32 +14,73 @@ import { RoleSwitcher } from "@/components/role-switcher";
  * selector is pinned to its bottom edge, never scrolled away with the list.
  *
  * Which links appear is decided here on the server from the acting role, so a
- * student never receives the markup for the staff sections at all.
+ * student never receives the markup for the teaching sections at all.
  */
 
-const staffNav = [
-  { href: "/", label: "Today", note: "What needs doing right now" },
-  { href: "/students", label: "Students", note: "Find and enrol students" },
-  { href: "/fees", label: "Fees", note: "Charges, payments, who is behind" },
-  { href: "/assessments", label: "Assessments", note: "Deadlines and marking" },
-];
+const nav = {
+  registry: {
+    label: "Registry office",
+    items: [
+      { href: "/", label: "Today", note: "What needs doing right now" },
+      { href: "/students", label: "Students", note: "Find and enrol students" },
+      { href: "/fees", label: "Fees", note: "Charges, payments, who is behind" },
+    ],
+  },
+  staff: {
+    label: "Teaching",
+    items: [
+      {
+        href: "/assessments",
+        label: "My assessments",
+        note: "What you have set, and what is due in",
+      },
+      {
+        href: "/assessments/new",
+        label: "Set an assessment",
+        note: "Title, module, deadline, cohort",
+      },
+    ],
+  },
+  student: {
+    label: "Your record",
+    items: [
+      { href: "/me", label: "My results", note: "Marks released to you" },
+      {
+        href: "/me/assessments",
+        label: "My work",
+        note: "Hand in or replace a file",
+      },
+      { href: "/me/fees", label: "My fees", note: "What you owe, and by when" },
+    ],
+  },
+} as const;
 
-const studentNav = [
-  { href: "/me", label: "My results", note: "Marks released to you" },
-  { href: "/me/assessments", label: "My work", note: "Hand in or replace a file" },
-  { href: "/me/fees", label: "My fees", note: "What you owe, and by when" },
-];
+const homeFor = { registry: "/", staff: "/assessments", student: "/me" } as const;
 
 export async function AppShell({ children }: { children: ReactNode }) {
   const session = await getSession();
 
-  const students = await prisma.student.findMany({
-    orderBy: { studentId: "asc" },
-    select: { id: true, fullName: true, studentId: true },
-  });
+  const [students, staff, actingStudent, actingStaff] = await Promise.all([
+    prisma.student.findMany({
+      orderBy: { studentId: "asc" },
+      select: { id: true, fullName: true, studentId: true },
+    }),
+    prisma.staffMember.findMany({
+      orderBy: { staffId: "asc" },
+      select: { id: true, fullName: true, title: true, department: true },
+    }),
+    getActingStudent(),
+    getActingStaff(),
+  ]);
 
-  const acting = await getActingStudent();
-  const nav = session.role === "staff" ? staffNav : studentNav;
+  const section = nav[session.role];
+
+  const value =
+    session.role === "student"
+      ? `student:${session.studentId}`
+      : session.role === "staff"
+        ? `staff:${session.staffId}`
+        : "registry";
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -51,7 +92,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
        */}
       <aside className="flex shrink-0 flex-col border-b border-rule-hard bg-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:border-b-0 lg:border-r">
         <Link
-          href={session.role === "staff" ? "/" : "/me"}
+          href={homeFor[session.role]}
           className="block border-b border-rule-hard px-4 py-4"
         >
           <span className="masthead block text-xl text-foreground">Registry</span>
@@ -62,13 +103,16 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
         {/* min-h-0 so this is what scrolls if the margin outgrows the viewport. */}
         <nav className="min-h-0 flex-1 overflow-y-auto py-3" aria-label="Sections">
-          <p className="colhead px-4 pb-1.5 text-dim">
-            {session.role === "staff" ? "Registry office" : "Your record"}
-          </p>
+          <p className="colhead px-4 pb-1.5 text-dim">{section.label}</p>
           <ul>
-            {nav.map((item) => (
+            {section.items.map((item) => (
               <li key={item.href}>
-                <NavLink href={item.href} label={item.label} note={item.note} />
+                <NavLink
+                  href={item.href}
+                  label={item.label}
+                  note={item.note}
+                  siblings={section.items.map((i) => i.href)}
+                />
               </li>
             ))}
           </ul>
@@ -76,11 +120,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
         {/* mt-auto keeps it on the bottom edge even when the nav is short. */}
         <RoleSwitcher
-          value={
-            session.role === "staff" ? "staff" : `student:${session.studentId}`
-          }
+          value={value}
           students={students}
-          actingFirstName={acting?.fullName.split(" ")[0]}
+          staff={staff}
+          actingName={
+            actingStudent?.fullName.split(" ")[0] ?? actingStaff?.fullName ?? null
+          }
+          role={session.role}
         />
       </aside>
 

@@ -1,4 +1,4 @@
-import { staffOnly } from "@/lib/guards";
+import { registryOnly } from "@/lib/guards";
 import { listProgrammes, listStudents } from "@/server/queries";
 import type { EnrolmentStatus } from "@/generated/prisma/enums";
 import { StudentFilters } from "@/components/student-filters";
@@ -34,7 +34,7 @@ export default async function StudentsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await staffOnly();
+  await registryOnly();
   const params = await searchParams;
 
   const search = typeof params.q === "string" ? params.q : "";

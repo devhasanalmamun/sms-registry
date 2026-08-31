@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { canReadSubmission } from "@/lib/access";
 import { readSubmissionFile } from "@/lib/storage";
 import {
   CANONICAL_MIME,
@@ -14,9 +15,11 @@ import {
  * Three things this route has to get right, in order of how badly each one
  * bites:
  *
- *  1. **Authorisation.** Staff may read any submission; a student may read only
- *     their own. Without this the file URL is an unauthenticated way to read
- *     someone else's coursework — the classic mistake in a system that gets the
+ *  1. **Authorisation.** A student may read only their own work; a staff member
+ *     may read only work handed in for an assessment they set; the Registry
+ *     office may read none of it, because coursework is not their business.
+ *     Without this the file URL is an unauthenticated way to read someone
+ *     else's coursework — the classic mistake in a system that gets the
  *     on-screen permissions right and forgets the attachment.
  *
  *  2. **The Content-Type is ours, not the uploader's.** Serving a file back
@@ -43,6 +46,7 @@ export async function GET(
       studentId: true,
       storedName: true,
       originalName: true,
+      assessment: { select: { createdById: true } },
     },
   });
 
@@ -50,7 +54,7 @@ export async function GET(
     return NextResponse.json({ error: "No such submission." }, { status: 404 });
   }
 
-  if (session.role === "student" && session.studentId !== submission.studentId) {
+  if (!canReadSubmission(session, submission)) {
     // Deliberately 404, not 403: confirming the file exists tells someone
     // browsing ids that they found a real submission.
     return NextResponse.json({ error: "No such submission." }, { status: 404 });

@@ -1,9 +1,14 @@
 # Registry — Student Management System
 
-The Registry module of a student management system: the four workflows a Registry
-administrator uses every day — **enrolment**, **fees and payments**, **assessment
-submission**, and **marksheet and results** — plus the student's own view of the
-same data.
+The Registry module of a student management system: the four workflows the brief
+sets out — **enrolment**, **fees and payments**, **assessment submission**, and
+**marksheet and results** — split across the three people who actually do them.
+
+Enrolment and money belong to the **Registry office**. Assessments, marking, and
+deciding which results a student may see belong to **teaching staff**. The
+**student** sees their own record. These are separate jobs with separate
+authority, and the app models them that way: a registrar cannot set an
+assessment or release a mark, and a lecturer cannot see the fees ledger.
 
 Built with **Next.js (App Router)**, **PostgreSQL**, **Prisma**, **shadcn/ui** and **TanStack Table**.
 
@@ -42,7 +47,7 @@ Docker the sequence above works with no edits at all.
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm test` | 51 unit tests (Vitest) over the fee, submission, date and grading rules |
+| `npm test` | 61 unit tests (Vitest) over the fee, submission, date, grading and access rules |
 | `npm run db:reset` | Drops, re-migrates and re-seeds — the fastest way back to a clean demo |
 | `npm run db:studio` | Prisma Studio, to inspect the data directly |
 
@@ -61,9 +66,20 @@ No credentials are committed. `.env` is gitignored; `.env.example` is the file t
 ## Trying it out
 
 There is no login — the brief allows a role toggle, so the sidebar has a
-**Viewing as** switcher: *Registry staff*, or any student. The choice is stored
-in an httpOnly cookie and read **server-side**, which is the part that matters:
-switching to a student does not hide staff data, it stops fetching it.
+**You are viewing this as** switcher offering the Registry office, any member of
+teaching staff, or any student. The choice is stored in an httpOnly cookie and
+read **server-side**, which is the part that matters: switching role does not
+hide the other role's data, it stops fetching it.
+
+| Role | Can | Cannot |
+| --- | --- | --- |
+| **Registry office** | Enrol and amend students, raise charges, record payments, chase arrears | Set assessments, enter marks, release results, open a submitted file |
+| **Teaching staff** | Set assessments for a cohort, read the work handed in, enter marks, publish or withhold **per student** | See the fees ledger, enrol anybody, touch another lecturer's assessment |
+| **Student** | Their own results, submissions, and fees | Anything belonging to anybody else |
+
+Teaching staff seeded: **Dr Priya Raman** (two BSc assessments), **Dr Martin
+Cole** (one MSc assessment), and **Professor Ines Bauer**, who has set nothing —
+because the empty state is a screen a new lecturer really sees.
 
 The seed plants one of every edge case, so the interesting things are visible on
 the first screen:
@@ -75,18 +91,25 @@ the first screen:
 | **Elena Kovac** | Sponsor overpaid → **in credit**, not a negative debt |
 | **Farhan Iqbal** | **Withdrawn** but still owing — still chased, and blocked from new charges |
 | **Hassan Ali** | A **withheld** fail (34) and a **resubmission** (attempt 2) |
+| **Chloe & Elena** | On the MSc — so the BSc coursework is not merely closed to them, it is invisible |
 | **Grace Lin** | **Completed**, fully settled, results published |
 
 A five-minute tour:
 
-1. **Today** — the dashboard leads with arrears, unmarked scripts, withheld
-   results and late submissions. Headcount is at the bottom, where it belongs.
-2. **Assessments → Coursework 1** — the marking sheet. Note that students with
-   *no* submission still have a row, and that saving a mark does not release it.
+1. **Today** (as Registry) — the desk leads with arrears. Headcount is at the
+   bottom, where it belongs. There is no marking queue here: Registry cannot
+   act on one.
+2. Switch to **Dr Priya Raman** → **My assessments**, then **Coursework 1**.
+   The marking sheet lists the five active BSc students the work was set for —
+   including the two who submitted nothing, because a blank row is the most
+   useful thing on the screen. Saving a mark does not release it.
 3. Switch to **Hassan Ali**. His 34 is nowhere on the page — and nowhere in the
-   HTML either. He sees "handed in, not yet released" instead of silence.
-4. Switch back to staff, publish his mark, switch back. Now it is there.
-5. As a student, **My work** → upload a PDF to an open assessment, then upload
+   HTML either. He sees "handed in, not yet released" instead of silence. Note
+   also that the MSc essay is absent entirely: it was never set for him.
+4. Switch back to Dr Raman, publish his mark, switch back. Now it is there.
+5. Switch to **Dr Martin Cole** and try Coursework 1's URL directly. It 404s —
+   he did not set it, so its marks are never loaded. Same for the file route.
+6. As a student, **My work** → upload a PDF to an open assessment, then upload
    again: it replaces the first. Try it on a closed one and it is refused.
 
 ---
@@ -116,6 +139,61 @@ bursary office actually allocates them, so a part payment clears the oldest debt
 and only the genuine shortfall shows as arrears. One colour — oxblood — is
 reserved for exactly this, used nowhere else in the interface.
 
+### Three roles, because there are three jobs
+
+The brief allows "a Staff view and a Student view", and my first pass took that
+literally: one `staff` flag guarding enrolment, fees, marking and publishing
+alike. That models an institution where the person chasing an unpaid instalment
+also decides who passed, which is not one I have ever seen.
+
+So the flag became three roles, and the split follows the brief's own wording —
+modules 1 and 2 say *"the Registry team"*, modules 3 and 4 say *"staff creates
+an assessment"* and *"staff can publish or withhold results per student"*:
+
+* **Registry office** — enrolment and the fees ledger.
+* **Teaching staff** — assessments, marking, and releasing results.
+* **Student** — their own record.
+
+They are enforced in three places, deliberately: `lib/guards.ts` redirects a
+page, `lib/session.ts` gates every Server Action, and the queries in
+`server/queries.ts` filter in SQL. A Server Action is a public endpoint, so
+knowing an id has to be worth nothing on its own.
+
+One consequence is worth stating plainly, because it cuts against a feature I
+had liked: **withholding a result over unpaid fees is no longer modellable.**
+The only person who can withhold is now the lecturer, and lecturers cannot see
+the ledger. That is what the brief asks for, and it is defensible — academic
+judgement should not be a debt-collection lever — but it is a real trade-off
+rather than an oversight. A real institution would handle it with a separate
+sanctions flag owned by Registry, which is out of scope here.
+
+### An assessment is set for a cohort, not for everybody
+
+`Assessment` carries a `programmeId` and a `createdById`. Before, every
+assessment was global: an MSc student saw the BSc coursework sitting there
+unsubmitted, and the marking sheet listed every student in the institution
+whether or not the work was set for them.
+
+Now an assessment reaches exactly the students on its programme, and the marking
+sheet lists exactly that cohort. The distinction matters because "you have not
+submitted" and "this was never set for you" look identical on a screen and mean
+completely different things.
+
+Ownership is the same idea applied to staff: `createdById` is checked inside the
+query that fetches the assessment, so a lecturer opening a colleague's marking
+sheet gets a 404 having loaded none of its marks.
+
+### The classification is the institution's, not the one I assumed
+
+`classify()` returns **Distinction ≥ 70, Merit ≥ 60, Pass ≥ 40, Fail below**.
+
+I originally wrote it as the UK honours ladder — 1st / 2:1 / 2:2 / 3rd — because
+that is what "classification" usually means for a degree. It is the wrong scheme
+for these regulations, and it invents a band at 50 that they do not recognise.
+The band is derived from the stored mark rather than stored beside it, so
+correcting the policy was a change to one function and its tests, not a data
+migration.
+
 ### Withheld results are not fetched, not hidden
 
 `getStudentMarksheet` filters `published: true` in the query. An unpublished mark
@@ -123,8 +201,10 @@ never enters the process, so it cannot leak through a serialised prop, a client
 bundle, or a log line. Hiding it in the component would have looked identical and
 been wrong.
 
-The same reasoning covers files: `GET /api/submissions/[id]/file` checks that a
-student owns the submission before serving it, and returns **404 rather than 403**
+The same reasoning covers files. `GET /api/submissions/[id]/file` asks
+`canReadSubmission` (in `src/lib/access.ts`, unit-tested): a student may read
+their own work, a lecturer may read work handed in for an assessment they set,
+and the Registry office may read none of it. It returns **404 rather than 403**,
 so the response does not confirm that someone else's file exists.
 
 ### Re-marking un-publishes
@@ -205,7 +285,8 @@ src/lib/                 rules, with no framework in them
   submissions.ts         late / resubmission / file identity ← tested
   grading.ts             classification bands                ← tested
   student-id.ts          atomic ID allocation                ← tested
-  session.ts             the role toggle, read server-side
+  session.ts             the three roles, read server-side
+  access.ts              who may read what                   ← tested
   storage.ts             file storage, path-escape guarded
   validation.ts          Zod schemas for every mutation
 
@@ -213,7 +294,8 @@ src/server/
   queries.ts             the read model — one place per rule
   actions.ts             mutations, each re-checking role and input
 
-src/app/                 staff pages, /me/* student pages, two API routes
+src/app/                 registry pages, /assessments/* teaching, /me/* student,
+                         and two API routes
 src/components/ui/       shadcn/ui, as generated — not hand-edited
 src/components/          the Registry layer composed on it, plus the forms
 src/components/tables/   one column definition per table, over TanStack
@@ -288,7 +370,7 @@ says so next to the figures rather than assuming it.
 Every table is **TanStack Table** driving the shadcn `Table` primitives — the
 shadcn data-table pattern. `src/components/data-table.tsx` is the shared shell
 and each file in `src/components/tables/` is one set of column definitions.
-Registry staff re-sort constantly, and always by the column in front of them:
+Registry and teaching staff both re-sort constantly, and always by the column in front of them:
 who owes the most, what is due first, which scripts are still unmarked. Those
 lists are small enough to hold in the page, so sorting is client-side and the
 server query stays responsible for *which* rows are in the list. Sorting state
@@ -354,6 +436,23 @@ assisted with some boilerplate".
   a named Attention column, and every black fill came out. Worth recording because
   the failure mode is specific: I had treated "make it look different" as the task
   when the task was "make it read better".
+- **I read "Staff view" and modelled one role where there are two.** The brief's
+  role-separation line says "a Staff view and a Student view", and I built
+  exactly that — so the Registry team created assessments and released marks.
+  Modules 3 and 4 say *staff* set the work and publish the results, and modules 1
+  and 2 say *the Registry team* handle enrolment and fees; the document had told
+  me it was two different jobs and I had read past it. The user caught it. The
+  fix was not cosmetic: a new table, two required columns, a three-state session,
+  and every guard, query and Server Action re-cut around it.
+- **I also invented the wrong grading scheme.** I wrote the UK honours ladder
+  because that is what "classification" conventionally means, rather than the
+  Pass/Merit/Distinction thresholds the brief specifies. A confident default in
+  place of the stated requirement — the same failure as above, one line lower.
+- **Publishing a result showed me a modelling gap in my own seed data.** Testing
+  the release path end to end put the marker's internal note — "do not release
+  before moderation" — straight onto the student's screen, because there is one
+  `feedback` field and publishing shows it verbatim. The seed text was wrong for
+  a student-facing field; I would not have noticed by reading the code.
 - **The interesting product decisions were mine.** Deriving the balance rather
   than storing it; separating "owing" from "in arrears"; re-marking
   un-publishing; showing students "not yet released" instead of nothing;
@@ -429,3 +528,11 @@ In rough priority order, with more than a few days:
 5. **Bulk mark entry**, and CSV export of a marksheet. Both are what markers ask
    for within a week of using a screen like this.
 6. **Notifications on publication**, so students are not refreshing a page.
+7. **A Registry-owned sanctions flag.** The role split means a lecturer can no
+   longer withhold a result over unpaid fees, and should not be able to. If the
+   institution genuinely wants that lever, it belongs to Registry as an explicit
+   hold on a student's record that the marksheet reads — not as a lecturer
+   quietly sitting on a mark.
+8. **Teaching allocation.** A staff member can currently set work for any
+   programme. A real timetable says who teaches which module to which cohort,
+   and the programme picker should be constrained by it.

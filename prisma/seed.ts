@@ -14,6 +14,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
  * student who still owes money, a late submission, a resubmission, a failed
  * mark that is still withheld, and an assessment nobody has submitted to.
  *
+ * It also seeds the three roles the app separates: the Registry office, three
+ * members of teaching staff (one of whom has set nothing, so the empty state is
+ * reachable), and the students. Each assessment belongs to the staff member who
+ * set it and to one programme's cohort.
+ *
  * All dates are relative to the moment the seed runs, so "overdue" and "due in
  * three days" stay true however long after seeding you open the app.
  */
@@ -76,6 +81,7 @@ async function main() {
   await prisma.payment.deleteMany();
   await prisma.feeCharge.deleteMany();
   await prisma.assessment.deleteMany();
+  await prisma.staffMember.deleteMany();
   await prisma.student.deleteMany();
   await prisma.programme.deleteMany();
   await prisma.studentIdSequence.deleteMany();
@@ -337,12 +343,49 @@ async function main() {
     ],
   });
 
+  console.log("Creating teaching staff...");
+  // Three, and deliberately one with nothing set: the empty state on the
+  // assessment list is a real screen a new lecturer sees on their first day.
+  const [priya, martin] = await Promise.all([
+    prisma.staffMember.create({
+      data: {
+        staffId: "STF-001",
+        fullName: "Priya Raman",
+        email: "priya.raman@example.ac.uk",
+        title: "Dr",
+        department: "Computer Science",
+      },
+    }),
+    prisma.staffMember.create({
+      data: {
+        staffId: "STF-002",
+        fullName: "Martin Cole",
+        email: "martin.cole@example.ac.uk",
+        title: "Dr",
+        department: "Data Science",
+      },
+    }),
+    prisma.staffMember.create({
+      data: {
+        staffId: "STF-003",
+        fullName: "Ines Bauer",
+        email: "ines.bauer@example.ac.uk",
+        title: "Professor",
+        department: "Computer Science",
+      },
+    }),
+  ]);
+
   console.log("Creating assessments...");
+  // Each is owned by the staff member who set it and aimed at one cohort, so
+  // the MSc students never see the CS coursework and vice versa.
   const closed = await prisma.assessment.create({
     data: {
       title: "Coursework 1 — Data Structures",
       module: "CS101 Programming Fundamentals",
       dueAt: daysAgo(10),
+      createdById: priya.id,
+      programmeId: bsc.id,
     },
   });
 
@@ -351,6 +394,8 @@ async function main() {
       title: "Group Project Report",
       module: "CS205 Software Engineering",
       dueAt: daysFromNow(3),
+      createdById: priya.id,
+      programmeId: bsc.id,
     },
   });
 
@@ -359,6 +404,8 @@ async function main() {
       title: "Research Methods Essay",
       module: "DS501 Research Methods",
       dueAt: daysFromNow(12),
+      createdById: martin.id,
+      programmeId: msc.id,
     },
   });
 
@@ -466,8 +513,13 @@ async function main() {
         assessmentId: closed.id,
         studentId: hassan.id,
         score: 34,
+        // Written to the student, not about them. There is one feedback field
+        // and publishing shows it verbatim, so a marker's internal note has no
+        // business in it — "do not release before moderation" is a thing you
+        // say to a colleague, and it would go straight to the student the
+        // moment somebody clicked Publish.
         feedback:
-          "Referred to the exam board. Do not release before moderation.",
+          "The linked-list section does not yet meet the pass standard. Come to office hours before the resit deadline and we will work through it.",
         published: false,
         markedAt: daysAgo(5),
       },
@@ -479,6 +531,7 @@ async function main() {
     students: await prisma.student.count(),
     charges: await prisma.feeCharge.count(),
     payments: await prisma.payment.count(),
+    staff: await prisma.staffMember.count(),
     assessments: await prisma.assessment.count(),
     submissions: await prisma.submission.count(),
     results: await prisma.result.count(),
@@ -493,6 +546,9 @@ async function main() {
       `Late submission: Ben Whitfield on "${closed.title}"`,
       `Withheld result: Hassan Ali on "${closed.title}"`,
       `Nobody has submitted to: "${open.title}"`,
+      "",
+      "Teaching staff: Dr Priya Raman (2 assessments, BSc), Dr Martin Cole (1, MSc),",
+      "Professor Ines Bauer (none — shows the empty state)",
       "",
     ].join("\n"),
   );

@@ -1,19 +1,14 @@
 import { notFound } from "next/navigation";
-import { staffOnly } from "@/lib/guards";
+import { registryOnly } from "@/lib/guards";
 import { getStudentDetail, listProgrammes } from "@/server/queries";
 import { updateStudent } from "@/server/actions";
-import { classify } from "@/lib/grading";
 import { StatusStamp } from "@/components/status-stamp";
 import { StudentForm } from "@/components/student-form";
 import { ChargeForm, PaymentForm } from "@/components/fee-forms";
 import { Figure, Footing, PageHeader, Panel, PanelHeader, Stamp } from "@/components/registry";
 import { ChargesTable, PaymentsTable } from "@/components/tables/ledger-tables";
-import { StudentResultsTable } from "@/components/tables/student-results-table";
-import { SubmissionsTable } from "@/components/tables/submissions-table";
 import {
-  formatBytes,
   formatDate,
-  formatDateTime,
   formatMoney,
   toDateInput,
 } from "@/lib/format";
@@ -30,7 +25,7 @@ export default async function StudentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await staffOnly();
+  await registryOnly();
   const { id } = await params;
 
   const [student, programmes] = await Promise.all([
@@ -59,35 +54,6 @@ export default async function StudentPage({
     receivedMs: p.paidAt.getTime(),
     amount: Number(p.amount.toFixed(2)),
   }));
-
-  const submissionRows = student.submissions.map((s) => ({
-    id: s.id,
-    assessmentId: s.assessmentId,
-    title: s.assessment.title,
-    module: s.assessment.module,
-    due: formatDateTime(s.assessment.dueAt),
-    submitted: formatDateTime(s.submittedAt),
-    submittedMs: s.submittedAt.getTime(),
-    isLate: s.isLate,
-    originalName: s.originalName,
-    size: formatBytes(s.sizeBytes),
-    attempt: s.attempt,
-  }));
-
-  const resultRows = student.results.map((r) => {
-    const band = classify(r.score);
-    return {
-      id: r.id,
-      assessmentId: r.assessmentId,
-      title: r.assessment.title,
-      feedback: r.feedback,
-      score: r.score,
-      band: band.band,
-      passed: band.passed,
-      published: r.published,
-      publishedOn: r.publishedAt ? formatDate(r.publishedAt) : null,
-    };
-  });
 
   return (
     <>
@@ -175,36 +141,13 @@ export default async function StudentPage({
         </Panel>
       </div>
 
-      {/* ----------------------------------------------------------------- */}
-      <Panel className="mb-6">
-        <PanelHeader
-          title="Submitted work"
-          hint="Uploads against assessments, newest first."
-        />
-        {student.submissions.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">
-            This student has not submitted anything yet.
-          </p>
-        ) : (
-          <SubmissionsTable rows={submissionRows} />
-        )}
-      </Panel>
-
-      {/* ----------------------------------------------------------------- */}
-      <Panel className="mb-6">
-        <PanelHeader
-          title="Marks"
-          hint="Withheld marks are visible here to staff, and only here."
-        />
-        {student.results.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">
-            No marks have been entered for this student.
-          </p>
-        ) : (
-          <StudentResultsTable rows={resultRows} />
-        )}
-      </Panel>
-
+      {/*
+       * No submissions and no marks on this page.
+       *
+       * They are the teaching side's, and this office has no authority over
+       * either — showing them here would invite "can you just release Hassan's
+       * mark?", which is a request Registry cannot action.
+       */}
       {/* ----------------------------------------------------------------- */}
       <StudentForm
         action={updateStudent}

@@ -15,6 +15,8 @@ export type AssessmentRow = {
   id: string;
   title: string;
   module: string;
+  programme: string;
+  programmeName: string;
   dueAtMs: number;
   deadline: string;
   relative: string;
@@ -41,6 +43,18 @@ const columns: ColumnDef<AssessmentRow, unknown>[] = [
         </Link>
         <span className="block text-xs text-muted-foreground">
           {row.original.module}
+        </span>
+      </>
+    ),
+  },
+  {
+    accessorKey: "programme",
+    header: "Set for",
+    cell: ({ row }) => (
+      <>
+        <span className="font-mono text-xs">{row.original.programme}</span>
+        <span className="block text-xs text-muted-foreground">
+          {row.original.programmeName}
         </span>
       </>
     ),

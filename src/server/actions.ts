@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import type { ActionState } from "@/server/action-state";
-import { requireStaff } from "@/lib/session";
+import { requireRegistry, requireStaff } from "@/lib/session";
 import { allocateStudentId } from "@/lib/student-id";
 import { parseMoney } from "@/lib/money";
 import { summariseFees } from "@/lib/fees";
@@ -65,7 +65,7 @@ export async function enrolStudent(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff();
+  await requireRegistry();
 
   const parsed = studentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -125,7 +125,7 @@ export async function updateStudent(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff();
+  await requireRegistry();
 
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, message: "No student selected." };
@@ -161,7 +161,7 @@ export async function recordPayment(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff();
+  await requireRegistry();
 
   const parsed = paymentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -230,7 +230,7 @@ export async function addCharge(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff();
+  await requireRegistry();
 
   const parsed = chargeSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -280,14 +280,30 @@ export async function addCharge(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Assessments and marks                                                       */
+/* Assessments and marks — teaching staff only                                 */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The ownership check, in one place.
+ *
+ * A Server Action is a public endpoint: knowing an assessment's id is enough to
+ * post to it. So every write below re-establishes that this staff member set
+ * this assessment, rather than trusting that the page only rendered their own.
+ */
+async function ownedAssessment(assessmentId: string, staffId: string) {
+  return prisma.assessment.findFirst({
+    where: { id: assessmentId, createdById: staffId },
+    select: { id: true, programmeId: true },
+  });
+}
+
+const NOT_YOURS = "That assessment was set by another member of staff.";
 
 export async function createAssessment(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff();
+  const staff = await requireStaff();
 
   const parsed = assessmentSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -300,9 +316,13 @@ export async function createAssessment(
       data: {
         title: parsed.data.title,
         module: parsed.data.module,
-        // The registrar typed a time on the institution's clock, not the
+        // The staff member typed a time on the institution's clock, not the
         // server's. See lib/time.
         dueAt: wallClockToInstant(parsed.data.dueAt)!,
+        // Ownership and cohort come from the session and the form, never from
+        // a hidden field naming another member of staff.
+        createdById: staff.id,
+        programmeId: parsed.data.programmeId,
       },
     });
     id = created.id;
@@ -311,7 +331,7 @@ export async function createAssessment(
   }
 
   revalidatePath("/assessments");
-  revalidatePath("/");
+  revalidatePath("/me/assessments");
   redirect(`/assessments/${id}`);
 }
 
@@ -319,13 +339,30 @@ export async function saveGrade(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireStaff();
+  const staff = await requireStaff();
 
   const parsed = gradeSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { ok: false, errors: fieldErrors(parsed.error) };
   }
   const { assessmentId, studentId, score, feedback } = parsed.data;
+
+  const assessment = await ownedAssessment(assessmentId, staff.id);
+  if (!assessment) return { ok: false, message: NOT_YOURS };
+
+  // A mark for a student who was never set this work would be invisible on the
+  // marking sheet (which lists the cohort) but perfectly visible on the
+  // student's own marksheet. Reject it here rather than create that ghost.
+  const inCohort = await prisma.student.findFirst({
+    where: { id: studentId, programmeId: assessment.programmeId },
+    select: { id: true },
+  });
+  if (!inCohort) {
+    return {
+      ok: false,
+      message: "That student is not in the cohort this assessment was set for.",
+    };
+  }
 
   try {
     await prisma.result.upsert({
@@ -351,39 +388,47 @@ export async function saveGrade(
   }
 
   revalidatePath(`/assessments/${assessmentId}`);
-  revalidatePath(`/students/${studentId}`);
-  revalidatePath("/");
+  revalidatePath("/assessments");
+  revalidatePath("/me");
   return { ok: true, message: "Mark saved and withheld until you publish it." };
 }
 
 export async function setResultPublished(formData: FormData) {
-  await requireStaff();
+  const staff = await requireStaff();
 
   const resultId = String(formData.get("resultId") ?? "");
   const publish = String(formData.get("publish") ?? "") === "true";
   if (!resultId) return;
 
-  const result = await prisma.result.update({
-    where: { id: resultId },
+  // Scoped by the assessment's owner, so releasing somebody else's mark
+  // updates nothing rather than succeeding quietly.
+  const { count } = await prisma.result.updateMany({
+    where: { id: resultId, assessment: { createdById: staff.id } },
     data: {
       published: publish,
       publishedAt: publish ? new Date() : null,
     },
+  });
+  if (count === 0) return;
+
+  const result = await prisma.result.findUniqueOrThrow({
+    where: { id: resultId },
     select: { assessmentId: true, studentId: true },
   });
 
   revalidatePath(`/assessments/${result.assessmentId}`);
-  revalidatePath(`/students/${result.studentId}`);
+  revalidatePath("/assessments");
   revalidatePath("/me");
-  revalidatePath("/");
+  revalidatePath("/me/assessments");
 }
 
 /** Publishes every mark on an assessment at once — the exam-board moment. */
 export async function publishAllResults(formData: FormData) {
-  await requireStaff();
+  const staff = await requireStaff();
 
   const assessmentId = String(formData.get("assessmentId") ?? "");
   if (!assessmentId) return;
+  if (!(await ownedAssessment(assessmentId, staff.id))) return;
 
   await prisma.result.updateMany({
     where: { assessmentId, published: false },
@@ -391,6 +436,6 @@ export async function publishAllResults(formData: FormData) {
   });
 
   revalidatePath(`/assessments/${assessmentId}`);
+  revalidatePath("/assessments");
   revalidatePath("/me");
-  revalidatePath("/");
 }

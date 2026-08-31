@@ -89,6 +89,7 @@ export const assessmentSchema = z.object({
   title: z.string().trim().min(2, "Enter a title").max(140),
   module: z.string().trim().min(2, "Enter a module").max(80),
   dueAt: localDateTime,
+  programmeId: z.string().min(1, "Choose the programme this is set for"),
 });
 
 export const gradeSchema = z.object({

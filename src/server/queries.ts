@@ -5,14 +5,22 @@ import { summariseFees, type FeeSummary } from "@/lib/fees";
 import { classify } from "@/lib/grading";
 
 /**
- * Read model for the Registry.
+ * The read model.
  *
- * Everything that derives money or decides what a student may see lives here,
- * so there is exactly one implementation of each rule. In particular
- * `getStudentMarksheet` filters on `published` in the database query itself —
- * an unpublished mark is never loaded, so it cannot leak into a payload, a log
- * line, or a React server component's serialised props.
+ * Everything that derives money or decides who may see what lives here, so
+ * there is exactly one implementation of each rule. Two of those rules are
+ * enforced in the database query itself rather than in a component:
+ *
+ *   * `getStudentMarksheet` filters on `published`, so an unpublished mark is
+ *     never loaded — it cannot leak into a payload, a log line, or a server
+ *     component's serialised props.
+ *   * Assessment queries filter on the cohort and, for staff, on ownership. A
+ *     lecturer's marking sheet lists the students the work was set for, and
+ *     nobody else.
  */
+
+/** Statuses that are expected to submit work. Withdrawn students are not. */
+const ACTIVE_STATUSES = ["ENROLLED", "DEFERRED", "COMPLETED"] as const;
 
 export type StudentFilters = {
   search?: string;
@@ -78,6 +86,13 @@ export async function listStudents(
   return filters.overdueOnly ? rows.filter((r) => r.fees.isOverdue) : rows;
 }
 
+/**
+ * The Registry's view of one student: their record and their ledger.
+ *
+ * No submissions and no marks. Those are the teaching side's, and a registrar
+ * has no authority over either — showing them here would invite a phone call
+ * ("can you just release Hassan's mark?") that this office cannot action.
+ */
 export async function getStudentDetail(id: string) {
   const student = await prisma.student.findUnique({
     where: { id },
@@ -85,14 +100,6 @@ export async function getStudentDetail(id: string) {
       programme: true,
       charges: { orderBy: { dueDate: "asc" } },
       payments: { orderBy: { paidAt: "desc" } },
-      submissions: {
-        include: { assessment: true },
-        orderBy: { submittedAt: "desc" },
-      },
-      results: {
-        include: { assessment: true },
-        orderBy: { markedAt: "desc" },
-      },
     },
   });
 
@@ -142,8 +149,20 @@ export async function getStudentMarksheet(studentId: string) {
  * read as "they lost my paper", which generates a phone call to Registry.
  */
 export async function getStudentAssessments(studentId: string) {
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
+    select: { programmeId: true },
+  });
+  if (!student) return [];
+
   const [assessments, submissions, published] = await Promise.all([
-    prisma.assessment.findMany({ orderBy: { dueAt: "asc" } }),
+    // Only work set for this student's programme. An assessment for another
+    // cohort is not "closed" or "not submitted" to them — it does not exist.
+    prisma.assessment.findMany({
+      where: { programmeId: student.programmeId },
+      include: { createdBy: { select: { fullName: true, title: true } } },
+      orderBy: { dueAt: "asc" },
+    }),
     prisma.submission.findMany({ where: { studentId } }),
     prisma.result.findMany({
       where: { studentId, published: true },
@@ -164,21 +183,31 @@ export async function getStudentAssessments(studentId: string) {
   }));
 }
 
-export async function listAssessments() {
+/**
+ * A staff member's own assessments.
+ *
+ * Scoped to `createdById`, so this is also the ownership boundary: a lecturer
+ * cannot list, open, or mark work somebody else set.
+ */
+export async function listAssessmentsFor(staffId: string) {
   const assessments = await prisma.assessment.findMany({
+    where: { createdById: staffId },
     orderBy: { dueAt: "desc" },
     include: {
+      programme: { select: { id: true, code: true, name: true } },
       submissions: { select: { id: true, isLate: true } },
       results: { select: { id: true, published: true } },
     },
   });
 
-  // The same cohort the marking sheet lists, so "4 of 6" on this page and the
-  // rows on that one cannot disagree. Withdrawn students are excluded: they
-  // are not expected to submit anything.
-  const expectedCohort = await prisma.student.count({
-    where: { status: { in: ["ENROLLED", "DEFERRED", "COMPLETED"] } },
+  // The expected cohort is per programme, so it is counted per programme —
+  // once each, not once per assessment.
+  const cohorts = await prisma.student.groupBy({
+    by: ["programmeId"],
+    where: { status: { in: [...ACTIVE_STATUSES] } },
+    _count: { _all: true },
   });
+  const cohortSize = new Map(cohorts.map((c) => [c.programmeId, c._count._all]));
 
   const now = Date.now();
 
@@ -186,28 +215,47 @@ export async function listAssessments() {
     ...a,
     closed: a.dueAt.getTime() < now,
     counts: {
-      expected: expectedCohort,
+      // Same cohort rule as the marking sheet, so "4 of 6" here and the rows
+      // there cannot disagree.
+      expected: cohortSize.get(a.programmeId) ?? 0,
       submitted: a.submissions.length,
       late: a.submissions.filter((s) => s.isLate).length,
       marked: a.results.length,
       published: a.results.filter((r) => r.published).length,
       awaitingMark: a.submissions.length - a.results.length,
+      withheld: a.results.filter((r) => !r.published).length,
     },
   }));
 }
 
 /**
- * The marking sheet: every student who could submit, alongside their
+ * The marking sheet: every student the work was set for, alongside their
  * submission and mark. Students with no submission still appear — a missing
  * submission is exactly what a marker needs to see.
+ *
+ * `staffId` is the ownership check, done in the same query that fetches the
+ * record: a staff member who did not set this assessment gets null, and the
+ * page redirects. Passing null (the caller has already established the viewer
+ * is not staff) skips the check.
  */
-export async function getAssessmentDetail(id: string) {
-  const assessment = await prisma.assessment.findUnique({ where: { id } });
+export async function getAssessmentDetail(id: string, staffId: string | null) {
+  const assessment = await prisma.assessment.findFirst({
+    where: { id, ...(staffId ? { createdById: staffId } : {}) },
+    include: {
+      programme: { select: { id: true, code: true, name: true } },
+      createdBy: { select: { fullName: true, title: true } },
+    },
+  });
   if (!assessment) return null;
 
   const [students, submissions, results] = await Promise.all([
+    // The cohort, not the institution: only students on this assessment's
+    // programme were ever set this work.
     prisma.student.findMany({
-      where: { status: { in: ["ENROLLED", "DEFERRED", "COMPLETED"] } },
+      where: {
+        programmeId: assessment.programmeId,
+        status: { in: [...ACTIVE_STATUSES] },
+      },
       include: { programme: { select: { code: true } } },
       orderBy: { studentId: "asc" },
     }),
@@ -232,36 +280,23 @@ export async function getAssessmentDetail(id: string) {
 }
 
 /**
- * The dashboard answers one question: what does Registry need to act on today?
+ * The Registry dashboard answers one question: what does the Registry office
+ * need to act on today?
+ *
+ * Enrolment and money, and nothing else. Marking queues and withheld results
+ * used to be summarised here; they belong to teaching staff, who are the only
+ * people who can act on them, and a dashboard listing work you are not allowed
+ * to do is just noise.
  */
 export async function getRegistryOverview() {
-  const [students, assessments, unpublished] = await Promise.all([
-    prisma.student.findMany({
-      include: {
-        programme: { select: { code: true, name: true } },
-        charges: { select: { amount: true, dueDate: true } },
-        payments: { select: { amount: true } },
-      },
-      orderBy: { studentId: "asc" },
-    }),
-    prisma.assessment.findMany({
-      include: {
-        submissions: {
-          include: { student: { select: { fullName: true, studentId: true } } },
-        },
-        results: { select: { id: true, published: true, studentId: true } },
-      },
-      orderBy: { dueAt: "asc" },
-    }),
-    prisma.result.findMany({
-      where: { published: false },
-      include: {
-        assessment: { select: { id: true, title: true } },
-        student: { select: { fullName: true, studentId: true } },
-      },
-      orderBy: { markedAt: "asc" },
-    }),
-  ]);
+  const students = await prisma.student.findMany({
+    include: {
+      programme: { select: { code: true, name: true } },
+      charges: { select: { amount: true, dueDate: true } },
+      payments: { select: { amount: true } },
+    },
+    orderBy: { studentId: "asc" },
+  });
 
   const withFees = students.map((s) => ({
     id: s.id,
@@ -276,26 +311,6 @@ export async function getRegistryOverview() {
     .filter((s) => s.fees.isOverdue)
     .sort((a, b) => Number(b.fees.overdueAmount) - Number(a.fees.overdueAmount));
 
-  const lateSubmissions = assessments.flatMap((a) =>
-    a.submissions
-      .filter((s) => s.isLate)
-      .map((s) => ({ assessment: a, submission: s })),
-  );
-
-  const awaitingMark = assessments.flatMap((a) => {
-    const marked = new Set(a.results.map((r) => r.studentId));
-    return a.submissions
-      .filter((s) => !marked.has(s.studentId))
-      .map((s) => ({ assessment: a, submission: s }));
-  });
-
-  const now = new Date();
-  const closingSoon = assessments.filter(
-    (a) =>
-      a.dueAt.getTime() > now.getTime() &&
-      a.dueAt.getTime() - now.getTime() < 7 * 24 * 60 * 60 * 1000,
-  );
-
   return {
     counts: {
       enrolled: withFees.filter((s) => s.status === "ENROLLED").length,
@@ -306,13 +321,13 @@ export async function getRegistryOverview() {
       inCredit: withFees.filter((s) => s.fees.inCredit).length,
     },
     overdue,
-    lateSubmissions,
-    awaitingMark,
-    unpublished,
-    closingSoon,
   };
 }
 
 export function listProgrammes() {
   return prisma.programme.findMany({ orderBy: { code: "asc" } });
+}
+
+export function listStaff() {
+  return prisma.staffMember.findMany({ orderBy: { staffId: "asc" } });
 }

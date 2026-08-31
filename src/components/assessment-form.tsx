@@ -6,7 +6,7 @@ import { IDLE } from "@/server/action-state";
 import { createAssessment } from "@/server/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, Notice } from "@/components/registry";
+import { Field, Notice, SelectField, type Option } from "@/components/registry";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -26,7 +26,7 @@ function defaultDeadline() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function AssessmentForm() {
+export function AssessmentForm({ programmes }: { programmes: Option[] }) {
   const [state, formAction] = useActionState(createAssessment, IDLE);
   const errors = state.errors ?? {};
 
@@ -59,11 +59,26 @@ export function AssessmentForm() {
       </Field>
 
       <Field
+        label="Set for"
+        htmlFor="programmeId"
+        error={errors.programmeId}
+        hint="Only students enrolled on this programme will see it, and only they appear on the marking sheet."
+      >
+        <SelectField
+          id="programmeId"
+          name="programmeId"
+          options={programmes}
+          placeholder="Choose a programme…"
+          invalid={Boolean(errors.programmeId)}
+          required
+        />
+      </Field>
+
+      <Field
         label="Submission deadline"
         htmlFor="dueAt"
         error={errors.dueAt}
         hint="Work submitted after this is accepted, but flagged as late."
-        className="sm:col-span-2"
       >
         <Input
           id="dueAt"

@@ -1,4 +1,4 @@
-import { staffOnly } from "@/lib/guards";
+import { registryOnly } from "@/lib/guards";
 import { listProgrammes } from "@/server/queries";
 import { enrolStudent } from "@/server/actions";
 import { StudentForm } from "@/components/student-form";
@@ -7,7 +7,7 @@ import { EmptyState, PageHeader, Panel } from "@/components/registry";
 export const dynamic = "force-dynamic";
 
 export default async function NewStudentPage() {
-  await staffOnly();
+  await registryOnly();
   const programmes = await listProgrammes();
 
   return (

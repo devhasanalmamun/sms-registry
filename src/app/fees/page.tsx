@@ -1,4 +1,4 @@
-import { staffOnly } from "@/lib/guards";
+import { registryOnly } from "@/lib/guards";
 import { listStudents } from "@/server/queries";
 import { formatDate, formatMoney } from "@/lib/format";
 import { Prisma } from "@/generated/prisma/client";
@@ -31,7 +31,7 @@ export default async function FeesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await staffOnly();
+  await registryOnly();
   const params = await searchParams;
   const filter = (
     typeof params.filter === "string" &&

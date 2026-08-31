@@ -10,29 +10,53 @@ import { prisma } from "@/lib/db";
  * Switches the acting role. Stands in for authentication, which the brief
  * makes optional — see src/lib/session.ts for why the read side is what
  * actually matters.
+ *
+ * The posted id is never trusted: an unknown student or staff member falls back
+ * to the Registry view rather than leaving the session holding a reference to
+ * somebody who does not exist.
  */
+
+/** Where each role can actually start work. */
+function landingFor(value: string) {
+  if (value.startsWith("student:")) return "/me";
+  if (value.startsWith("staff:")) return "/assessments";
+  return "/";
+}
+
 export async function switchRole(formData: FormData) {
-  const value = String(formData.get("role") ?? "staff");
+  const value = String(formData.get("role") ?? "registry");
   const store = await cookies();
 
+  const set = (v: string) =>
+    store.set(ROLE_COOKIE, v, { path: "/", httpOnly: true, sameSite: "lax" });
+
+  let exists = true;
   if (value.startsWith("student:")) {
-    const id = value.slice("student:".length);
-    // Never trust the posted id: confirm the student exists before adopting it.
-    const student = await prisma.student.findUnique({
-      where: { id },
-      select: { id: true },
-    });
-    if (!student) {
-      store.set(ROLE_COOKIE, "staff", { path: "/", httpOnly: true, sameSite: "lax" });
-      revalidatePath("/", "layout");
-      redirect("/");
-    }
+    exists = Boolean(
+      await prisma.student.findUnique({
+        where: { id: value.slice("student:".length) },
+        select: { id: true },
+      }),
+    );
+  } else if (value.startsWith("staff:")) {
+    exists = Boolean(
+      await prisma.staffMember.findUnique({
+        where: { id: value.slice("staff:".length) },
+        select: { id: true },
+      }),
+    );
   }
 
-  store.set(ROLE_COOKIE, value, { path: "/", httpOnly: true, sameSite: "lax" });
+  if (!exists) {
+    set("registry");
+    revalidatePath("/", "layout");
+    redirect("/");
+  }
+
+  set(value);
   revalidatePath("/", "layout");
 
-  // Land on a page the new role can actually see, rather than a permission
-  // error on whatever page they happened to be looking at.
-  redirect(value.startsWith("student:") ? "/me" : "/");
+  // Land on a page the new role can actually see, rather than a redirect from
+  // whatever page they happened to be looking at.
+  redirect(landingFor(value));
 }

@@ -73,6 +73,17 @@ export async function POST(request: Request) {
     );
   }
 
+  // The cohort check. An assessment is set for one programme, and the page only
+  // offers a student their own — but this is a public endpoint, and posting an
+  // id from another cohort would otherwise file work against an assessment
+  // whose marking sheet will never list them.
+  if (assessment.programmeId !== student.programmeId) {
+    return NextResponse.json(
+      { error: "That assessment was not set for your programme." },
+      { status: 403 },
+    );
+  }
+
   const existing = await prisma.submission.findUnique({
     where: {
       assessmentId_studentId: { assessmentId, studentId: student.id },

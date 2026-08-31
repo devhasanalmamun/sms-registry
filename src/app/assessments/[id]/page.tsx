@@ -13,19 +13,23 @@ export const dynamic = "force-dynamic";
 /**
  * The marking sheet.
  *
- * Every student who could have submitted appears, including the ones who did
- * not — a blank row is the single most useful thing on this screen, and a list
- * built only from submissions would hide it.
+ * Every student the work was set for appears, including the ones who did not
+ * submit — a blank row is the single most useful thing on this screen, and a
+ * list built only from submissions would hide it. "Set for" means the cohort:
+ * students on the assessment's programme, nobody else.
+ *
+ * Ownership is checked inside the query rather than after it, so a staff member
+ * who did not set this assessment never loads its marks at all.
  */
 export default async function AssessmentPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await staffOnly();
+  const staff = await staffOnly();
   const { id } = await params;
 
-  const detail = await getAssessmentDetail(id);
+  const detail = await getAssessmentDetail(id, staff.id);
   if (!detail) notFound();
 
   const { assessment, rows, closed } = detail;
@@ -61,7 +65,7 @@ export default async function AssessmentPage({
     <>
       <PageHeader
         trail={{ href: "/assessments", label: "All assessments" }}
-        reference={assessment.module}
+        reference={`${assessment.module} · ${assessment.programme.name}`}
         title={assessment.title}
         lede={
           closed
@@ -94,7 +98,7 @@ export default async function AssessmentPage({
       <Panel>
         <PanelHeader
           title="Marking sheet"
-          hint="Saving a mark does not release it. Publishing is a separate, deliberate act."
+          hint="Saving a mark does not release it — students see nothing until you publish. Re-marking a released result withholds it again, so a corrected mark is never shown before you have looked at it."
           action={
             withheld.length > 0 ? (
               <form action={publishAllResults}>

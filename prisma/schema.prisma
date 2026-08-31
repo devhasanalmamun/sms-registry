@@ -38,6 +38,7 @@ model Programme {
   feeAmount     Decimal   @db.Decimal(10, 2)
   createdAt     DateTime  @default(now())
   students      Student[]
+  assessments   Assessment[]
 
   @@map("programmes")
 }
@@ -100,17 +101,52 @@ model Payment {
   @@map("payments")
 }
 
-model Assessment {
+/// Teaching staff. Distinct from the Registry team: staff set assessments,
+/// mark them, and decide which results a student may see. They never touch
+/// enrolment or the fees ledger.
+model StaffMember {
   id        String   @id @default(cuid())
-  title     String
-  module    String
-  dueAt     DateTime
+  /// Human-facing identifier, e.g. STF-014.
+  staffId   String   @unique
+  fullName  String
+  /// Stored lowercased, as with students.
+  email     String   @unique
+  /// How they are addressed on a marksheet: "Dr", "Professor", "Ms".
+  title     String?
+  /// Faculty or school. Display only — teaching is not restricted by it.
+  department String?
+  createdAt DateTime @default(now())
+
+  assessments Assessment[]
+
+  @@map("staff_members")
+}
+
+model Assessment {
+  id     String   @id @default(cuid())
+  title  String
+  module String
+  dueAt  DateTime
+
+  /// The staff member who set it. Ownership is a fact in the database, not a
+  /// UI convention: only this person may mark it or release its results.
+  createdById String
+  createdBy   StaffMember @relation(fields: [createdById], references: [id])
+
+  /// The cohort it is set for. An assessment reaches exactly the students
+  /// enrolled on this programme — nobody else sees it or appears on its
+  /// marking sheet.
+  programmeId String
+  programme   Programme @relation(fields: [programmeId], references: [id])
+
   createdAt DateTime @default(now())
 
   submissions Submission[]
   results     Result[]
 
   @@index([dueAt])
+  @@index([createdById])
+  @@index([programmeId])
   @@map("assessments")
 }
 
@@ -146,7 +182,8 @@ model Result {
   /// 0-100. Constrained in the application layer and by a CHECK constraint.
   score        Int
   feedback     String?
-  /// Results are withheld by default: staff publish deliberately, per student.
+  /// Results are withheld by default: the staff member who set the assessment
+  /// publishes deliberately, per student.
   published    Boolean    @default(false)
   publishedAt  DateTime?
   markedAt     DateTime   @default(now())

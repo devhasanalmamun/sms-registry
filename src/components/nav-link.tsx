@@ -18,25 +18,23 @@ export function NavLink({
   href,
   label,
   note,
+  siblings = [],
 }: {
   href: string;
   label: string;
   note: string;
+  /** The other entries in this nav. See `isActive`. */
+  siblings?: readonly string[];
 }) {
   const pathname = usePathname();
-  // "/" and "/me" must match exactly; everything else matches its subtree.
-  const active =
-    href === "/" || href === "/me"
-      ? pathname === href
-      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <Link
       href={href}
-      aria-current={active ? "page" : undefined}
+      aria-current={isActive(pathname, href, siblings) ? "page" : undefined}
       className={cn(
         "block border-l-[3px] py-2 pl-3 pr-4 transition-colors",
-        active
+        isActive(pathname, href, siblings)
           ? "border-stamp bg-card"
           : "border-transparent hover:border-rule-hard hover:bg-card/70",
       )}
@@ -44,7 +42,9 @@ export function NavLink({
       <span
         className={cn(
           "block text-sm",
-          active ? "font-semibold text-stamp" : "font-medium text-foreground",
+          isActive(pathname, href, siblings)
+            ? "font-semibold text-stamp"
+            : "font-medium text-foreground",
         )}
       >
         {label}
@@ -53,5 +53,26 @@ export function NavLink({
         {note}
       </span>
     </Link>
+  );
+}
+
+function covers(pathname: string, href: string) {
+  // "/" and "/me" would otherwise cover the whole site and every /me/* page.
+  if (href === "/" || href === "/me") return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * Longest match wins.
+ *
+ * "My assessments" (`/assessments`) covers the whole teaching section, and "Set
+ * an assessment" (`/assessments/new`) sits inside it — so on the new-assessment
+ * page both entries matched and both lit up, which tells the reader nothing
+ * about where they are. Only the most specific entry is current.
+ */
+function isActive(pathname: string, href: string, siblings: readonly string[]) {
+  if (!covers(pathname, href)) return false;
+  return !siblings.some(
+    (other) => other !== href && other.length > href.length && covers(pathname, other),
   );
 }
