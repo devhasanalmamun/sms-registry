@@ -5,7 +5,10 @@ import Link from "next/link";
 import { DataTable, type ColumnDef } from "@/components/data-table";
 import { Code, Stamp } from "@/components/registry";
 import { SubmitButton } from "@/components/submit-button";
-import { MarksheetGradeForm } from "@/components/marksheet-row";
+import {
+  MarksheetFeedbackCell,
+  MarksheetGradeForm,
+} from "@/components/marksheet-row";
 import { classify } from "@/lib/grading";
 import { setResultPublished } from "@/server/actions";
 
@@ -105,8 +108,18 @@ export function MarksheetTable({
             assessmentId={assessmentId}
             studentId={row.original.studentId}
             score={row.original.score}
-            feedback={row.original.feedback}
             hasSubmission={Boolean(row.original.submission)}
+          />
+        ),
+      },
+      {
+        id: "feedback",
+        header: "Feedback",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <MarksheetFeedbackCell
+            studentId={row.original.studentId}
+            feedback={row.original.feedback}
           />
         ),
       },
@@ -135,7 +148,10 @@ export function MarksheetTable({
           if (!resultId)
             return <span className="text-xs text-muted-foreground">Not marked</span>;
           return (
-            <form action={setResultPublished} className="space-y-1.5">
+            <form
+              action={setResultPublished}
+              className="flex items-center gap-2"
+            >
               <input type="hidden" name="resultId" value={resultId} />
               <input type="hidden" name="publish" value={String(!published)} />
               {published ? (
@@ -146,7 +162,6 @@ export function MarksheetTable({
               <SubmitButton
                 size="sm"
                 variant={published ? "destructive" : "default"}
-                className="block w-full"
                 pendingLabel={published ? "Withholding…" : "Publishing…"}
               >
                 {published ? "Withhold" : "Publish"}
@@ -163,14 +178,11 @@ export function MarksheetTable({
     <DataTable
       columns={columns}
       data={rows}
-      mark={(r) =>
-        r.resultId && !r.published
-          ? { tone: "flag", label: "Withheld" }
-          : r.submission?.isLate
-            ? { tone: "watch", label: "Late" }
-            : null
-      }
-      minWidth="56rem"
+      // No Attention column here. On every other table it earns its place, but
+      // on this one it would say "Withheld" beside a Released cell already
+      // saying it, and "Late" beside a Submission cell already stamped Late.
+      // Repeating a fact twice in one row does not make it more visible.
+      minWidth="60rem"
       alignTop
       caption="Marking sheet"
     />

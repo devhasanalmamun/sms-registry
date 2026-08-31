@@ -367,6 +367,15 @@ active one. Detail screens open with a route back. And where the domain has a
 distinction a reader cannot guess — "owing" is not "in arrears" — the screen
 says so next to the figures rather than assuming it.
 
+Marks and feedback **save when you leave the field**, not when you press a
+button. A marker works down a pile of scripts with their hands on the keyboard —
+type the mark, tab, type the comment, tab — and a click between each one is the
+friction that gets a spreadsheet opened instead. Two guards keep it quiet:
+nothing is sent unless the value changed, and nothing is sent without a mark,
+since a result with no score is not a thing this domain has. That second guard
+would silently drop a comment typed against an unmarked student, so it says so
+instead. The comment box is a textarea, because feedback is prose.
+
 Nothing in the app reloads the document. Switching role, saving a mark and
 releasing a result are all Server Actions, and navigation is client-side — but
 every route is dynamic with no `loading.tsx`, so a click holds the previous
