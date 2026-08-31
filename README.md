@@ -9,9 +9,6 @@ teacher cannot see the money.
 
 **Next.js (App Router) · PostgreSQL · Prisma · Tailwind + shadcn/ui · TanStack Table · Vitest**
 
-Why each decision was made — and what I got wrong along the way — is in
-**[NOTES.md](NOTES.md)**.
-
 ---
 
 ## Running it locally
@@ -143,9 +140,6 @@ pages, and tests once I described the rule I wanted held.
 **I tested by using the app,** not by trusting that it compiled: uploaded files,
 handed work in late, and tried to open another student's file to make sure I
 could not.
-
-The longer version, with every bug and why it happened, is in
-[NOTES.md](NOTES.md).
 
 ---
 
