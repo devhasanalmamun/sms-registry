@@ -21,7 +21,7 @@ export default async function NewAssessmentPage() {
       <PageHeader
         trail={{ href: "/assessments", label: "My assessments" }}
         title="Set an assessment"
-        lede="It appears immediately for the cohort you choose. The deadline decides what counts as late and when resubmission closes — students can replace their file freely up to it, and not after."
+        lede="It appears immediately for the students on the course you choose. The deadline decides what counts as late and when resubmission closes — students can replace their file freely up to it, and not after."
       />
 
       <Panel>

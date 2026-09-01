@@ -11,18 +11,18 @@ export const dynamic = "force-dynamic";
 type Filter = "all" | "overdue" | "outstanding" | "credit" | "settled";
 
 const filters: { key: Filter; label: string; hint: string }[] = [
-  { key: "all", label: "All accounts", hint: "Every student on the register" },
-  { key: "overdue", label: "In arrears", hint: "Past a due date and still owing" },
-  { key: "outstanding", label: "Owing", hint: "A balance, but nothing past due yet" },
-  { key: "credit", label: "In credit", hint: "Paid more than they were charged" },
-  { key: "settled", label: "Settled", hint: "Nothing outstanding" },
+  { key: "all", label: "Everyone", hint: "Every student on the register" },
+  { key: "overdue", label: "Late", hint: "Past a due date and still owing" },
+  { key: "outstanding", label: "Owes money", hint: "Still to pay, but nothing is late yet" },
+  { key: "credit", label: "Overpaid", hint: "Paid more than they were charged" },
+  { key: "settled", label: "Paid up", hint: "Nothing left to pay" },
 ];
 
 /**
  * The fees ledger.
  *
- * The distinction the whole page turns on: "owing" and "in arrears" are not
- * the same thing. Most students owe money for most of the year — that is how
+ * The distinction the whole page turns on: owing money and being late are
+ * not the same thing. Most students owe money for most of the year — that is how
  * instalments work. Only the ones past a due date need chasing, and only those
  * are allowed to use the seal colour.
  */
@@ -97,26 +97,26 @@ export default async function FeesPage({
     <>
       <PageHeader
         title="Fees"
-        lede="Charges raised, payments received, and who is actually behind. Most students owe something for most of the year — that is how instalments work. Only a charge that has passed its due date counts as arrears, and only those need chasing."
+        lede="Charges raised, payments received, and who is actually behind. Most students owe something for most of the year — that is how instalments work. A payment only counts as late once its due date has passed, and only those need chasing."
       />
 
       <Panel className="mb-6">
         <PanelHeader
           title="Position across the register"
-          hint={`${collected.toFixed(1)}% of everything charged has been received. "Outstanding" is everything still owed; "in arrears" is the part of it that is late.`}
+          hint={`${collected.toFixed(1)}% of everything charged has been received. "Still owed" is everything not yet paid; "late" is the part of it past its due date.`}
         />
         <Footing>
           <Figure value={formatMoney(totals.charged.toFixed(2))} label="Charged" />
           <Figure value={formatMoney(totals.paid.toFixed(2))} label="Received" tone="clear" />
-          <Figure value={formatMoney(totals.outstanding.toFixed(2))} label="Outstanding" />
+          <Figure value={formatMoney(totals.outstanding.toFixed(2))} label="Still owed" />
           <Figure
             value={formatMoney(totals.overdue.toFixed(2))}
-            label="In arrears"
+            label="Late"
             tone={totals.overdue.greaterThan(0) ? "flag" : "neutral"}
           />
           <Figure
             value={formatMoney(totals.credit.toFixed(2))}
-            label="Held in credit"
+            label="Overpaid"
             tone={totals.credit.greaterThan(0) ? "watch" : "neutral"}
           />
         </Footing>

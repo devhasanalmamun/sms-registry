@@ -65,8 +65,8 @@ export default async function StudentPage({
         action={
           <div className="flex flex-wrap items-center gap-2">
             <StatusStamp status={student.status} />
-            {fees.isOverdue ? <Stamp tone="flag">Arrears</Stamp> : null}
-            {fees.inCredit ? <Stamp tone="watch">In credit</Stamp> : null}
+            {fees.isOverdue ? <Stamp tone="flag">Late</Stamp> : null}
+            {fees.inCredit ? <Stamp tone="watch">Overpaid</Stamp> : null}
           </div>
         }
       />
@@ -77,12 +77,12 @@ export default async function StudentPage({
           title="Fee account"
           hint={
             fees.isOverdue
-              ? "This account is in arrears and should be chased."
+              ? "This student is behind on a payment and should be chased."
               : fees.inCredit
-                ? "This account is in credit. A refund may be due."
+                ? "This student has paid more than they were charged. A refund may be due."
                 : fees.nextDueDate
                   ? `Next instalment falls due ${formatDate(fees.nextDueDate)}.`
-                  : "Nothing outstanding."
+                  : "Nothing left to pay."
           }
         />
         <Footing>
@@ -94,7 +94,7 @@ export default async function StudentPage({
                 ? formatMoney(fees.balance.negated().toFixed(2))
                 : formatMoney(fees.balance.toFixed(2))
             }
-            label={fees.inCredit ? "In credit" : "Balance"}
+            label={fees.inCredit ? "Overpaid" : "Balance"}
             tone={fees.inCredit ? "watch" : fees.balance.greaterThan(0) ? "neutral" : "clear"}
           />
           <Figure

@@ -104,7 +104,7 @@ export function Panel({ className, ...rest }: ComponentProps<typeof Card>) {
 /**
  * A section heading, with the sentence that says what the section is for.
  *
- * The hint is not decoration: "owing" and "in arrears" are different things in
+ * The hint is not decoration: owing money and being late are different things in
  * this domain, and a reader who does not know that will misread the screen. So
  * the screen says it.
  */

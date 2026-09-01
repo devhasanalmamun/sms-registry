@@ -96,7 +96,7 @@ export function PaymentForm({ studentId }: { studentId: string }) {
         <Input
           id="note"
           name="note"
-          placeholder="Optional — e.g. part payment agreed with the bursary office"
+          placeholder="Optional — e.g. part payment agreed with the fees office"
         />
       </Field>
 
@@ -152,7 +152,7 @@ export function ChargeForm({ studentId }: { studentId: string }) {
         label="Due date"
         htmlFor="dueDate"
         error={errors.dueDate}
-        hint="The account falls into arrears the day after this date."
+        hint="The payment counts as late the day after this date."
       >
         <Input
           id="dueDate"

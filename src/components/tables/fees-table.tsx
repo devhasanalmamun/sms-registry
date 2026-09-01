@@ -50,7 +50,7 @@ const columns: ColumnDef<FeeRow, unknown>[] = [
   },
   {
     accessorKey: "status",
-    header: "Standing",
+    header: "Status",
     enableSorting: false,
     cell: ({ row }) => <StatusStamp status={row.original.status} />,
   },
@@ -109,9 +109,9 @@ export function FeesTable({ rows }: { rows: FeeRow[] }) {
       data={rows}
       mark={(r) =>
         r.isOverdue
-          ? { tone: "flag", label: "In arrears" }
+          ? { tone: "flag", label: "Late" }
           : r.inCredit
-            ? { tone: "watch", label: "In credit" }
+            ? { tone: "watch", label: "Overpaid" }
             : null
       }
       minWidth="58rem"

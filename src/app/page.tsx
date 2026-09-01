@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  *
  * A Registry administrator does not open a dashboard to admire totals; they
  * open it to find out who needs chasing before lunch. So the page leads with
- * the work — arrears — and relegates the headcount to a single ruled summary
+ * the work — who is late paying — and relegates the headcount to a single ruled summary
  * line, the way a ledger carries its footing.
  *
  * Marking queues and withheld results used to appear here too. They belong to
@@ -48,25 +48,25 @@ export default async function DashboardPage() {
 
       <Panel className="mb-6">
         <PanelHeader
-          title="Fees in arrears"
+          title="Late payments"
           hint={
             overview.overdue.length > 0
-              ? `${overview.overdue.length} ${overview.overdue.length === 1 ? "account" : "accounts"} past their due date · ${formatMoney(totalOverdue.toFixed(2))} outstanding`
-              : "A balance only counts as arrears once a charge has passed its due date."
+              ? `${overview.overdue.length} ${overview.overdue.length === 1 ? "account" : "accounts"} past their due date · ${formatMoney(totalOverdue.toFixed(2))} still owed`
+              : "A balance only counts as late once a charge has passed its due date."
           }
           action={
             <Link
               href="/fees?filter=overdue"
               className="text-sm text-foreground underline underline-offset-4 hover:text-flag"
             >
-              Open the fees ledger
+              Open the fees page
             </Link>
           }
         />
         {overview.overdue.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
             No account is past its due date. Students with a future instalment
-            still owe money — that is not arrears, and nobody needs to chase it.
+            still owe money — that is not late, and nobody needs to chase it.
           </p>
         ) : (
           <ArrearsTable rows={arrearsRows} />
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
           <Figure value={overview.counts.completed} label="Completed" />
           <Figure
             value={overview.counts.inCredit}
-            label="In credit"
+            label="Overpaid"
             tone={overview.counts.inCredit > 0 ? "watch" : "neutral"}
           />
         </Footing>

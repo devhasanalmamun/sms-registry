@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 /**
  * The student's fee account.
  *
- * Same ledger the bursary office sees, phrased for the person who owes the
+ * Same account the fees office sees, phrased for the person who owes the
  * money: what was charged, what has been received, what is left, and by when.
- * No "arrears" jargon and no seal-red unless something is genuinely late.
+ * No office jargon and no seal-red unless something is genuinely late.
  */
 export default async function MyFeesPage() {
   const student = await studentOnly();
@@ -49,16 +49,17 @@ export default async function MyFeesPage() {
         {fees.isOverdue ? (
           <Notice tone="flag">
             {formatMoney(fees.overdueAmount.toFixed(2))} is past its due date.
-            Contact the bursary office to arrange payment — this can affect your
+            Contact the fees office to arrange payment — this can affect your
             enrolment.
           </Notice>
         ) : fees.inCredit ? (
           <Notice tone="watch">
-            Your account is {formatMoney(fees.balance.negated().toFixed(2))} in
-            credit. The bursary office will be in touch about a refund.
+            You have paid {formatMoney(fees.balance.negated().toFixed(2))} more
+            than you were charged. The fees office will be in touch about a
+            refund.
           </Notice>
         ) : fees.balance.isZero() ? (
-          <Notice tone="clear">Your fees are fully paid. Nothing is outstanding.</Notice>
+          <Notice tone="clear">Your fees are fully paid. There is nothing left to pay.</Notice>
         ) : (
           <Notice tone="neutral">
             {formatMoney(fees.balance.toFixed(2))} remains, due{" "}
@@ -78,7 +79,7 @@ export default async function MyFeesPage() {
                 ? formatMoney(fees.balance.negated().toFixed(2))
                 : formatMoney(fees.balance.toFixed(2))
             }
-            label={fees.inCredit ? "In credit" : "Still to pay"}
+            label={fees.inCredit ? "Overpaid" : "Still to pay"}
             tone={fees.isOverdue ? "flag" : fees.inCredit ? "watch" : "neutral"}
           />
         </Footing>

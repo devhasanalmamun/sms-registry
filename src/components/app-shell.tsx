@@ -42,7 +42,7 @@ const nav = {
       {
         href: "/assessments/new",
         label: "Set an assessment",
-        note: "Title, module, deadline, cohort",
+        note: "Title, module, deadline, course",
       },
     ],
   },

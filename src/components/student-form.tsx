@@ -148,7 +148,7 @@ export function StudentForm({
           label="Enrolment status"
           htmlFor="status"
           error={errors.status}
-          hint="Withdrawn students keep their record and their outstanding balance."
+          hint="Withdrawn students keep their record and anything they still owe."
         >
           <SelectField
             id="status"

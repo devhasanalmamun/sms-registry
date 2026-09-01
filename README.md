@@ -71,8 +71,7 @@ The demo data has one example of every tricky case. A five-minute tour:
    first), then try one whose deadline has passed (refused).
 
 Others worth a look: **Ben Whitfield** (paid part of a late bill, and handed
-work in late), **Elena Kovac** (overpaid, so she is in credit rather than in
-debt), **Farhan Iqbal** (left the course but still owes money), **Grace Lin**
+work in late), **Elena Kovac** (paid too much, so the school owes her), **Farhan Iqbal** (left the course but still owes money), **Grace Lin**
 (finished, paid up, results out).
 
 ---

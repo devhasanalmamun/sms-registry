@@ -89,7 +89,7 @@ export default async function AssessmentsPage() {
             }
           >
             Students can only submit against an assessment that exists, and only
-            the cohort it is set for will see it.
+            the students on the course it is set for will see it.
           </EmptyState>
         ) : (
           <AssessmentsTable rows={rows} />

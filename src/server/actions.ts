@@ -214,13 +214,13 @@ export async function recordPayment(
   if (before.balance.greaterThan(0) && overpaid.greaterThan(0)) {
     return {
       ok: true,
-      message: `Payment recorded. This clears the balance and leaves £${overpaid.toFixed(2)} in credit — check the amount if that was not intended.`,
+      message: `Payment recorded. This clears the balance and leaves £${overpaid.toFixed(2)} overpaid — check the amount if that was not intended.`,
     };
   }
   if (before.balance.lessThanOrEqualTo(0)) {
     return {
       ok: true,
-      message: `Payment recorded. This account was already settled, so it is now £${amount.plus(before.balance.negated()).toFixed(2)} in credit.`,
+      message: `Payment recorded. This student had already paid in full, so they are now £${amount.plus(before.balance.negated()).toFixed(2)} overpaid.`,
     };
   }
 
@@ -257,7 +257,7 @@ export async function addCharge(
     return {
       ok: false,
       message:
-        "This student has withdrawn. Their outstanding balance still stands, but new charges cannot be raised against a closed account.",
+        "This student has withdrawn. Anything they still owe stands, but new charges cannot be raised against a closed account.",
     };
   }
 
@@ -364,7 +364,7 @@ export async function saveGrade(
     return {
       ok: false,
       message:
-        "That student is not in the cohort this assessment was set for, or is no longer enrolled.",
+        "That student is not on the course this assessment was set for, or is no longer enrolled.",
     };
   }
 

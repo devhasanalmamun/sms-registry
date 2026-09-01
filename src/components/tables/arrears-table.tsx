@@ -46,7 +46,7 @@ const columns: ColumnDef<ArrearsRow, unknown>[] = [
   },
   {
     accessorKey: "status",
-    header: "Standing",
+    header: "Status",
     enableSorting: false,
     cell: ({ row }) =>
       row.original.status === "WITHDRAWN" ? (
@@ -77,7 +77,7 @@ export function ArrearsTable({ rows }: { rows: ArrearsRow[] }) {
       columns={columns}
       data={rows}
       initialSorting={[{ id: "overdueAmount", desc: true }]}
-      caption="Accounts in arrears"
+      caption="Students behind on a payment"
     />
   );
 }

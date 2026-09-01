@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
  *  · **An Attention column, in words.** An earlier version marked these rows
  *    with a coloured bar in a blank margin. It looked considered and was
  *    unreadable: nobody can learn what a red bar means from a tooltip. If a row
- *    needs chasing, the table says "In arrears".
+ *    needs chasing, the table says "Late".
  *
  * Sorting is client-side because Registry staff re-sort constantly, and always
  * by the column in front of them: who owes most, what is due first, which
@@ -181,7 +181,7 @@ export function DataTable<TData>({
                   {flagged ? (
                     <Stamp tone={flagged.tone}>{flagged.label}</Stamp>
                   ) : (
-                    <span className="text-sm text-dim" aria-label="Nothing outstanding">
+                    <span className="text-sm text-dim" aria-label="Nothing to pay">
                       &mdash;
                     </span>
                   )}
