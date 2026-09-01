@@ -281,6 +281,23 @@
   }
 }
 
+/*
+ * The progress rule.
+ *
+ * Changing who you are viewing as re-renders the whole shell — the navigation
+ * itself changes — so the screen is replaced in one go. Without something
+ * moving, that reads as the browser reloading the page. A rule that travels
+ * across the top says "this is a transition, and it is still going".
+ */
+@keyframes switching-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(500%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
